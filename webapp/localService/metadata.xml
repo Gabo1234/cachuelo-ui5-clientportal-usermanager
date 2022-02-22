@@ -1,0 +1,932 @@
+<?xml version="1.0" encoding="utf-8"?>
+<edmx:Edmx Version="1.0" xmlns:edmx="http://schemas.microsoft.com/ado/2007/06/edmx" xmlns:m="http://schemas.microsoft.com/ado/2007/08/dataservices/metadata" xmlns:sap="http://www.sap.com/Protocols/SAPData">
+    <edmx:Reference Uri="https://sap.github.io/odata-vocabularies/vocabularies/Common.xml" xmlns:edmx="http://docs.oasis-open.org/odata/ns/edmx">
+        <edmx:Include Alias="Common" Namespace="com.sap.vocabularies.Common.v1"/>
+    </edmx:Reference>
+    <edmx:Reference Uri="https://oasis-tcs.github.io/odata-vocabularies/vocabularies/Org.OData.Core.V1.xml" xmlns:edmx="http://docs.oasis-open.org/odata/ns/edmx">
+        <edmx:Include Alias="Core" Namespace="Org.OData.Core.V1"/>
+    </edmx:Reference>
+    <edmx:DataServices m:DataServiceVersion="2.0">
+        <Schema Namespace="ClientPortalService" xmlns="http://schemas.microsoft.com/ado/2008/09/edm">
+            <EntityContainer Name="EntityContainer" m:IsDefaultEntityContainer="true">
+                <EntitySet Name="TrackingReportSet" EntityType="ClientPortalService.TrackingReportSet"/>
+                <EntitySet Name="TrackingReportDetailSet" EntityType="ClientPortalService.TrackingReportDetailSet"/>
+                <EntitySet Name="MasterSet" EntityType="ClientPortalService.MasterSet"/>
+                <EntitySet Name="TipoTablaSet" EntityType="ClientPortalService.TipoTablaSet"/>
+                <EntitySet Name="DocumentSet" EntityType="ClientPortalService.DocumentSet"/>
+                <EntitySet Name="LogSet" EntityType="ClientPortalService.LogSet"/>
+                <FunctionImport Name="DeleteDocumentTransportExport" ReturnType="Edm.Boolean" m:HttpMethod="GET">
+                    <Parameter Name="IdIngresoExportacion" Type="Edm.String" Mode="In" Nullable="true"/>
+                </FunctionImport>
+                <FunctionImport Name="InsertStatusDetailByExportIncome" ReturnType="Edm.Boolean" m:HttpMethod="GET">
+                    <Parameter Name="IdExportIncome" Type="Edm.Int32" Mode="In" Nullable="true"/>
+                    <Parameter Name="IdEstado" Type="Edm.String" Mode="In" Nullable="true"/>
+                </FunctionImport>
+                <FunctionImport Name="DeleteDocumentTransport" ReturnType="Edm.Boolean" m:HttpMethod="GET">
+                    <Parameter Name="IdDocumentotransporte" Type="Edm.String" Mode="In" Nullable="true"/>
+                </FunctionImport>
+                <FunctionImport Name="InsertStatusDetail" ReturnType="Edm.Boolean" m:HttpMethod="GET">
+                    <Parameter Name="IdManifiesto" Type="Edm.String" Mode="In" Nullable="true"/>
+                    <Parameter Name="IdEstado" Type="Edm.String" Mode="In" Nullable="true"/>
+                </FunctionImport>
+                <FunctionImport Name="InsertStatusDetailByDT" ReturnType="Edm.Boolean" m:HttpMethod="GET">
+                    <Parameter Name="IdDocumentotransporte" Type="Edm.String" Mode="In" Nullable="true"/>
+                    <Parameter Name="IdManifiesto" Type="Edm.String" Mode="In" Nullable="true"/>
+                    <Parameter Name="IdEstado" Type="Edm.String" Mode="In" Nullable="true"/>
+                    <Parameter Name="BIsID" Type="Edm.Boolean" Mode="In" Nullable="true"/>
+                </FunctionImport>
+                <FunctionImport Name="InsertStatusDetailByVol" ReturnType="Edm.Boolean" m:HttpMethod="GET">
+                    <Parameter Name="NVolante" Type="Edm.String" Mode="In" Nullable="true"/>
+                    <Parameter Name="IdEstado" Type="Edm.String" Mode="In" Nullable="true"/>
+                    <Parameter Name="BIsID" Type="Edm.Boolean" Mode="In" Nullable="true"/>
+                </FunctionImport>
+                <FunctionImport Name="VFormatoInformacionVolantes" ReturnType="ClientPortalService.TFormatoInformacionVolantes" m:HttpMethod="GET">
+                    <Parameter Name="IDMAN" Type="Edm.String" Mode="In" Nullable="true"/>
+                    <Parameter Name="NVOL" Type="Edm.String" Mode="In" Nullable="true"/>
+                </FunctionImport>
+                <FunctionImport Name="VUnidadAlmacenamiento" ReturnType="Collection(ClientPortalService.TUnidadAlmacenamiento)" m:HttpMethod="GET">
+                    <Parameter Name="IDMAN" Type="Edm.String" Mode="In" Nullable="true"/>
+                    <Parameter Name="NVOL" Type="Edm.String" Mode="In" Nullable="true"/>
+                </FunctionImport>
+                <FunctionImport Name="VFormatoInformacionWareHouseIE" ReturnType="Collection(ClientPortalService.TFormatoInformacionWareHouseIE)" m:HttpMethod="GET">
+                    <Parameter Name="WAREHOUSE" Type="Edm.String" Mode="In" Nullable="true"/>
+                </FunctionImport>
+                <FunctionImport Name="VFormatoActaInventario" ReturnType="Collection(ClientPortalService.TFormatoActaInventario)" m:HttpMethod="GET">
+                    <Parameter Name="IDMAN" Type="Edm.String" Mode="In" Nullable="true"/>
+                    <Parameter Name="DTID" Type="Edm.String" Mode="In" Nullable="true"/>
+                </FunctionImport>
+                <FunctionImport Name="VManifiestoAdjuntoV2" ReturnType="Collection(ClientPortalService.TManifiestoAdjuntoV2)" m:HttpMethod="GET">
+                    <Parameter Name="IDMAN" Type="Edm.String" Mode="In" Nullable="true"/>
+                    <Parameter Name="DTID" Type="Edm.String" Mode="In" Nullable="true"/>
+                    <Parameter Name="ISMASTER" Type="Edm.Boolean" Mode="In" Nullable="true"/>
+                </FunctionImport>
+                <FunctionImport Name="VEjecucionServiciosIntermedios" ReturnType="ClientPortalService.TEjecucionServiciosIntermedios" m:HttpMethod="GET">
+                    <Parameter Name="CODVOL" Type="Edm.String" Mode="In" Nullable="true"/>
+                </FunctionImport>
+                <FunctionImport Name="VInmovilizacion" ReturnType="ClientPortalService.TInmovilizacion" m:HttpMethod="GET">
+                    <Parameter Name="CODVOL" Type="Edm.String" Mode="In" Nullable="true"/>
+                </FunctionImport>
+                <AssociationSet Name="TrackingReportSet_ToDetail" Association="ClientPortalService.TrackingReportSet_ToDetail">
+                    <End Role="TrackingReportSet" EntitySet="TrackingReportSet"/>
+                    <End Role="TrackingReportDetailSet" EntitySet="TrackingReportDetailSet"/>
+                </AssociationSet>
+                <AssociationSet Name="TrackingReportDetailSet_ToHeader" Association="ClientPortalService.TrackingReportDetailSet_ToHeader">
+                    <End Role="TrackingReportDetailSet" EntitySet="TrackingReportDetailSet"/>
+                    <End Role="TrackingReportSet" EntitySet="TrackingReportSet"/>
+                </AssociationSet>
+                <AssociationSet Name="MasterSet_ToTipoTabla" Association="ClientPortalService.MasterSet_ToTipoTabla">
+                    <End Role="MasterSet" EntitySet="MasterSet"/>
+                    <End Role="TipoTablaSet" EntitySet="TipoTablaSet"/>
+                </AssociationSet>
+            </EntityContainer>
+            <EntityType Name="TrackingReportSet">
+                <Key>
+                    <PropertyRef Name="IdMaster"/>
+                    <PropertyRef Name="IdHouse"/>
+                    <PropertyRef Name="IdManifiesto"/>
+                </Key>
+                <Property Name="fechaRegistro" Type="Edm.DateTimeOffset"/>
+                <Property Name="usuarioRegistro" Type="Edm.String" MaxLength="100" Nullable="false"/>
+                <Property Name="fechaActualiza" Type="Edm.DateTimeOffset"/>
+                <Property Name="usuarioActualiza" Type="Edm.String" MaxLength="100"/>
+                <Property Name="activo" Type="Edm.Boolean" Nullable="false"/>
+                <Property Name="IdMaster" Type="Edm.Int32" Nullable="false"/>
+                <Property Name="IdHouse" Type="Edm.Int32" Nullable="false"/>
+                <Property Name="IdManifiesto" Type="Edm.Int32" Nullable="false"/>
+                <Property Name="NGUI" Type="Edm.String" MaxLength="64"/>
+                <Property Name="NHWA" Type="Edm.String" MaxLength="64"/>
+                <Property Name="NRUC" Type="Edm.String" MaxLength="70"/>
+                <Property Name="CONS" Type="Edm.String" MaxLength="72"/>
+                <Property Name="NVOL" Type="Edm.String" MaxLength="36"/>
+                <Property Name="NMAN" Type="Edm.String" MaxLength="32"/>
+                <Property Name="NDAM" Type="Edm.String" MaxLength="64"/>
+                <Property Name="TIPO" Type="Edm.String"/>
+                <Property Name="TALM" Type="Edm.String"/>
+                <Property Name="FCRE" Type="Edm.DateTimeOffset"/>
+                <Property Name="DEST" Type="Edm.String" MaxLength="500"/>
+                <Property Name="ORIG" Type="Edm.String" MaxLength="500"/>
+                <NavigationProperty Name="ToDetail" Relationship="ClientPortalService.TrackingReportSet_ToDetail" FromRole="TrackingReportSet" ToRole="TrackingReportDetailSet"/>
+            </EntityType>
+            <EntityType Name="TrackingReportDetailSet">
+                <Key>
+                    <PropertyRef Name="IdMaster"/>
+                    <PropertyRef Name="IdHouse"/>
+                    <PropertyRef Name="IdManifiesto"/>
+                    <PropertyRef Name="INDS"/>
+                </Key>
+                <Property Name="fechaRegistro" Type="Edm.DateTimeOffset"/>
+                <Property Name="usuarioRegistro" Type="Edm.String" MaxLength="100" Nullable="false"/>
+                <Property Name="fechaActualiza" Type="Edm.DateTimeOffset"/>
+                <Property Name="usuarioActualiza" Type="Edm.String" MaxLength="100"/>
+                <Property Name="activo" Type="Edm.Boolean" Nullable="false"/>
+                <Property Name="IdMaster" Type="Edm.Int32" Nullable="false"/>
+                <Property Name="IdHouse" Type="Edm.Int32" Nullable="false"/>
+                <Property Name="IdManifiesto" Type="Edm.Int32" Nullable="false"/>
+                <Property Name="FCMB" Type="Edm.DateTime" sap:display-format="Date"/>
+                <Property Name="HCMB" Type="Edm.Time"/>
+                <Property Name="NGUI" Type="Edm.String" MaxLength="64"/>
+                <Property Name="NHWA" Type="Edm.String" MaxLength="64"/>
+                <Property Name="NMAN" Type="Edm.String" MaxLength="32"/>
+                <Property Name="INDS" Type="Edm.String" MaxLength="36" Nullable="false"/>
+                <Property Name="DESC" Type="Edm.String" MaxLength="50"/>
+                <NavigationProperty Name="ToHeader" Relationship="ClientPortalService.TrackingReportDetailSet_ToHeader" FromRole="TrackingReportDetailSet" ToRole="TrackingReportSet"/>
+            </EntityType>
+            <EntityType Name="MasterSet">
+                <Key>
+                    <PropertyRef Name="MASTER_ID"/>
+                </Key>
+                <Property Name="fechaRegistro" Type="Edm.DateTimeOffset"/>
+                <Property Name="usuarioRegistro" Type="Edm.String" MaxLength="100" Nullable="false"/>
+                <Property Name="fechaActualiza" Type="Edm.DateTimeOffset"/>
+                <Property Name="usuarioActualiza" Type="Edm.String" MaxLength="100"/>
+                <Property Name="activo" Type="Edm.Boolean" Nullable="false"/>
+                <Property Name="MASTER_ID" Type="Edm.String" MaxLength="36" Nullable="false"/>
+                <Property Name="TIPO_TABLA" Type="Edm.String" MaxLength="36"/>
+                <Property Name="CODIGO" Type="Edm.String" MaxLength="36" Nullable="false"/>
+                <Property Name="CONTENIDO" Type="Edm.String" MaxLength="500" Nullable="false"/>
+                <Property Name="CONTENIDO_SECUNDARIO" Type="Edm.String" MaxLength="500"/>
+                <NavigationProperty Name="ToTipoTabla" Relationship="ClientPortalService.MasterSet_ToTipoTabla" FromRole="MasterSet" ToRole="TipoTablaSet"/>
+            </EntityType>
+            <EntityType Name="TipoTablaSet">
+                <Key>
+                    <PropertyRef Name="TIPO_TABLA_ID"/>
+                </Key>
+                <Property Name="fechaRegistro" Type="Edm.DateTimeOffset"/>
+                <Property Name="usuarioRegistro" Type="Edm.String" MaxLength="100" Nullable="false"/>
+                <Property Name="fechaActualiza" Type="Edm.DateTimeOffset"/>
+                <Property Name="usuarioActualiza" Type="Edm.String" MaxLength="100"/>
+                <Property Name="activo" Type="Edm.Boolean" Nullable="false"/>
+                <Property Name="TIPO_TABLA_ID" Type="Edm.String" MaxLength="36" Nullable="false"/>
+                <Property Name="TABLA" Type="Edm.String" MaxLength="50" Nullable="false"/>
+                <Property Name="DESCRIPCION" Type="Edm.String" MaxLength="250"/>
+            </EntityType>
+            <EntityType Name="DocumentSet">
+                <Key>
+                    <PropertyRef Name="DOCUMENT_ID"/>
+                </Key>
+                <Property Name="fechaRegistro" Type="Edm.DateTimeOffset"/>
+                <Property Name="usuarioRegistro" Type="Edm.String" MaxLength="100" Nullable="false"/>
+                <Property Name="fechaActualiza" Type="Edm.DateTimeOffset"/>
+                <Property Name="usuarioActualiza" Type="Edm.String" MaxLength="100"/>
+                <Property Name="activo" Type="Edm.Boolean" Nullable="false"/>
+                <Property Name="DOCUMENT_ID" Type="Edm.String" MaxLength="36" Nullable="false"/>
+                <Property Name="NOMBRE" Type="Edm.String" MaxLength="100"/>
+                <Property Name="RUTA" Type="Edm.String" MaxLength="300"/>
+            </EntityType>
+            <EntityType Name="LogSet">
+                <Key>
+                    <PropertyRef Name="ID"/>
+                </Key>
+                <Property Name="ID" Type="Edm.Guid" Nullable="false"/>
+                <Property Name="codigoError" Type="Edm.String" MaxLength="10"/>
+                <Property Name="descripcionError" Type="Edm.String" MaxLength="3000"/>
+                <Property Name="user" Type="Edm.String" MaxLength="100"/>
+                <Property Name="application" Type="Edm.String" MaxLength="200"/>
+                <Property Name="fecha" Type="Edm.DateTimeOffset"/>
+            </EntityType>
+            <ComplexType Name="TFormatoInformacionVolantes">
+                <Property Name="VersionOMA" Type="Edm.String" MaxLength="64"/>
+                <Property Name="UnidadPeso" Type="Edm.String" MaxLength="64"/>
+                <Property Name="UbicacionDescAlmacen" Type="Edm.String" MaxLength="5000"/>
+                <Property Name="UbicacionCodSapAlmacen" Type="Edm.String" MaxLength="64"/>
+                <Property Name="UbicacionCodAlmacen" Type="Edm.String" MaxLength="32"/>
+                <Property Name="TransportistaTipoIdentificacion" Type="Edm.String" MaxLength="64"/>
+                <Property Name="TransportistaRol" Type="Edm.String" MaxLength="64"/>
+                <Property Name="TransportistaNombre" Type="Edm.String" MaxLength="250"/>
+                <Property Name="TransportistaIdentificacion" Type="Edm.String" MaxLength="32"/>
+                <Property Name="TransportistaDireccion" Type="Edm.String" MaxLength="250"/>
+                <Property Name="TransporteVia" Type="Edm.String" MaxLength="32"/>
+                <Property Name="TransporteNumeroViaje" Type="Edm.String" MaxLength="20"/>
+                <Property Name="TransporteMatricula" Type="Edm.String" MaxLength="60"/>
+                <Property Name="TransporteFechaEstimadaLlegada" Type="Edm.String" MaxLength="5000"/>
+                <Property Name="TipoCargaDescripcion" Type="Edm.String" MaxLength="5000"/>
+                <Property Name="TipoCargaCodigoSap" Type="Edm.String" MaxLength="64"/>
+                <Property Name="TipoCargaCodigo" Type="Edm.String" MaxLength="256"/>
+                <Property Name="TipoAlmacenamientoDescripcion" Type="Edm.String" MaxLength="5000"/>
+                <Property Name="TipoAlmacenamientoCodigoSap" Type="Edm.String" MaxLength="64"/>
+                <Property Name="TipoAlmacenamientoCodigo" Type="Edm.String" MaxLength="256"/>
+                <Property Name="TicketNumeracion" Type="Edm.String" MaxLength="32"/>
+                <Property Name="TerminalOrigenDescripcion" Type="Edm.String" MaxLength="5000"/>
+                <Property Name="TerminalOrigen" Type="Edm.String" MaxLength="64"/>
+                <Property Name="TerminalDestinoDescripcion" Type="Edm.String" MaxLength="5000"/>
+                <Property Name="TerminalDestino" Type="Edm.String" MaxLength="64"/>
+                <Property Name="RucSaasa" Type="Edm.String" MaxLength="5000"/>
+                <Property Name="RegimenAduanaDescripcion" Type="Edm.String" MaxLength="5000"/>
+                <Property Name="RegimenAduanaCodigoSAP" Type="Edm.String" MaxLength="64"/>
+                <Property Name="RegimenAduanaCodigo" Type="Edm.String" MaxLength="256"/>
+                <Property Name="PuntoLlegadaDescripcion" Type="Edm.String" MaxLength="5000"/>
+                <Property Name="PuntoLlegada" Type="Edm.String" MaxLength="64"/>
+                <Property Name="PaisAduana" Type="Edm.String" MaxLength="64"/>
+                <Property Name="OrigenDescripcion" Type="Edm.String" MaxLength="5000"/>
+                <Property Name="Origen" Type="Edm.String" MaxLength="64"/>
+                <Property Name="OrganizacionNombreAduana" Type="Edm.String" MaxLength="64"/>
+                <Property Name="NumeroPrecinto" Type="Edm.Int32"/>
+                <Property Name="NumeroOrdenNumeracion" Type="Edm.String" MaxLength="32"/>
+                <Property Name="NumeroContenedor" Type="Edm.String" MaxLength="64"/>
+                <Property Name="NotificadoTipoIdentificacion" Type="Edm.String" MaxLength="32"/>
+                <Property Name="NotificadoTelefono" Type="Edm.String" MaxLength="32"/>
+                <Property Name="NotificadoRol" Type="Edm.String" MaxLength="64"/>
+                <Property Name="NotificadoNombre" Type="Edm.String" MaxLength="250"/>
+                <Property Name="NotificadoIdentificacion" Type="Edm.String" MaxLength="32"/>
+                <Property Name="NotificadoDireccion" Type="Edm.String" MaxLength="250"/>
+                <Property Name="NotificadoCorreo" Type="Edm.String" MaxLength="250"/>
+                <Property Name="ModalidadDescripcion" Type="Edm.String" MaxLength="5000"/>
+                <Property Name="ManifiestoTransportistaDireccion" Type="Edm.String" MaxLength="250"/>
+                <Property Name="ManifiestoTransportistaDescripcion" Type="Edm.String" MaxLength="250"/>
+                <Property Name="ManifiestoTransportistaCodigo" Type="Edm.String" MaxLength="32"/>
+                <Property Name="ManifiestoTipo" Type="Edm.String" MaxLength="64"/>
+                <Property Name="ManifiestoNumeroIncidencia" Type="Edm.Int32"/>
+                <Property Name="ManifiestoNumero" Type="Edm.String" MaxLength="32"/>
+                <Property Name="ManifiestoJurisdicionAduanera" Type="Edm.String" MaxLength="64"/>
+                <Property Name="ManifiestoIdEstadoTransmisionMD" Type="Edm.Int32"/>
+                <Property Name="ManifiestoIdEstadoIRM" Type="Edm.Int32"/>
+                <Property Name="ManifiestoIdEstadoActaInventario" Type="Edm.Int32"/>
+                <Property Name="ManifiestoId" Type="Edm.Int32"/>
+                <Property Name="ManifiestoFechaLlegadaATAString" Type="Edm.String" MaxLength="5000"/>
+                <Property Name="ManifiestoFechaInicioTarjaString" Type="Edm.String" MaxLength="5000"/>
+                <Property Name="ManifiestoFechaInicioTarja" Type="Edm.DateTimeOffset"/>
+                <Property Name="ManifiestoFechaHoraLlegadaATAString" Type="Edm.String" MaxLength="5000"/>
+                <Property Name="ManifiestoFechaHoraInicioTarjaString" Type="Edm.String" MaxLength="5000"/>
+                <Property Name="ManifiestoFechaHoraFinTarjaString" Type="Edm.String" MaxLength="5000"/>
+                <Property Name="ManifiestoFechaFinTarjaString" Type="Edm.String" MaxLength="5000"/>
+                <Property Name="ManifiestoFechaFinTarja" Type="Edm.DateTimeOffset"/>
+                <Property Name="ManifiestoDescTipoManifiesto" Type="Edm.String" MaxLength="5000"/>
+                <Property Name="ManifiestoComentarioIncidencia" Type="Edm.String" MaxLength="300"/>
+                <Property Name="ManifiestoComentario" Type="Edm.String" MaxLength="300"/>
+                <Property Name="ManifiestoCampoTipoManifiesto" Type="Edm.String" MaxLength="256"/>
+                <Property Name="ManifiestoAnio" Type="Edm.Int32"/>
+                <Property Name="ManifiestoActaInventarioObs" Type="Edm.String" MaxLength="5000"/>
+                <Property Name="ManifiestoActaInventarioNroFormato" Type="Edm.String" MaxLength="17"/>
+                <Property Name="ItinerarioOrigen" Type="Edm.String" MaxLength="32"/>
+                <Property Name="ItinerarioNroViaje" Type="Edm.String" MaxLength="32"/>
+                <Property Name="ItinerarioId" Type="Edm.Int32"/>
+                <Property Name="ItinerarioDireccionTransportista" Type="Edm.String" MaxLength="250"/>
+                <Property Name="ItinerarioDescripcionTransportista" Type="Edm.String" MaxLength="250"/>
+                <Property Name="ItinerarioCodigoYata" Type="Edm.String" MaxLength="50"/>
+                <Property Name="ItinerarioCodigoTransportista" Type="Edm.String" MaxLength="32"/>
+                <Property Name="IsVolante" Type="Edm.Int32"/>
+                <Property Name="IdVolante" Type="Edm.Int32"/>
+                <Property Name="IdTransportista" Type="Edm.Int32"/>
+                <Property Name="IdRegimen" Type="Edm.Int32"/>
+                <Property Name="IdContenedor" Type="Edm.Int32"/>
+                <Property Name="FleteTipoPago" Type="Edm.String" MaxLength="32"/>
+                <Property Name="FleteTipo" Type="Edm.String" MaxLength="32"/>
+                <Property Name="FleteMonto" Type="Edm.Decimal" Scale="3" Precision="12"/>
+                <Property Name="FleteMoneda" Type="Edm.String" MaxLength="32"/>
+                <Property Name="FleteId" Type="Edm.Int32"/>
+                <Property Name="FechaTerminoDescargaString" Type="Edm.String" MaxLength="5000"/>
+                <Property Name="FechaTerminoDescarga" Type="Edm.DateTimeOffset"/>
+                <Property Name="FechaHoraTerminoDescargaString" Type="Edm.String" MaxLength="5000"/>
+                <Property Name="FechaGeneracion" Type="Edm.String" MaxLength="5000"/>
+                <Property Name="FechaFinTarja" Type="Edm.String" MaxLength="5000"/>
+                <Property Name="EmisorVersionDocumento" Type="Edm.String" MaxLength="64"/>
+                <Property Name="EmisorTipoRol" Type="Edm.String" MaxLength="64"/>
+                <Property Name="EmisorTipoIdentificacion" Type="Edm.String" MaxLength="64"/>
+                <Property Name="EmisorIdentificacion" Type="Edm.String" MaxLength="64"/>
+                <Property Name="EmbarcadorTipoIdentificacion" Type="Edm.String" MaxLength="32"/>
+                <Property Name="EmbarcadorTelefono" Type="Edm.String" MaxLength="32"/>
+                <Property Name="EmbarcadorRol" Type="Edm.String" MaxLength="64"/>
+                <Property Name="EmbarcadorNombre" Type="Edm.String" MaxLength="250"/>
+                <Property Name="EmbarcadorIdentificacion" Type="Edm.String" MaxLength="32"/>
+                <Property Name="EmbarcadorDireccion" Type="Edm.String" MaxLength="250"/>
+                <Property Name="EmbarcadorCorreo" Type="Edm.String" MaxLength="250"/>
+                <Property Name="DTVolumen" Type="Edm.Decimal" Scale="3" Precision="12"/>
+                <Property Name="DTVinVehiculos" Type="Edm.String" MaxLength="32"/>
+                <Property Name="DTTipoBultoDescripcion" Type="Edm.String" MaxLength="5000"/>
+                <Property Name="DTTipoBulto" Type="Edm.String" MaxLength="32"/>
+                <Property Name="DTTipo" Type="Edm.String" MaxLength="32"/>
+                <Property Name="DTSecuencia" Type="Edm.Int32"/>
+                <Property Name="DTPuertoFinal" Type="Edm.String" MaxLength="64"/>
+                <Property Name="DTPuertoEmbarque" Type="Edm.String" MaxLength="32"/>
+                <Property Name="DTPesoSobrante" Type="Edm.Decimal" Scale="3" Precision="28"/>
+                <Property Name="DTPesoRecibido" Type="Edm.Decimal" Scale="3" Precision="18"/>
+                <Property Name="DTPesoManifestado" Type="Edm.Decimal" Scale="3" Precision="18"/>
+                <Property Name="DTPesoMalEstado" Type="Edm.Decimal" Scale="3" Precision="18"/>
+                <Property Name="DTPesoFaltante" Type="Edm.Decimal" Scale="3" Precision="28"/>
+                <Property Name="DTPesoBuenEstado" Type="Edm.Decimal" Scale="3" Precision="28"/>
+                <Property Name="DTNumeroDetalle" Type="Edm.Int32"/>
+                <Property Name="DTNaturalezaCarga" Type="Edm.String" MaxLength="32"/>
+                <Property Name="DTMasterId" Type="Edm.Int32"/>
+                <Property Name="DTMasterCodigo" Type="Edm.String" MaxLength="64"/>
+                <Property Name="DTLugarEmision" Type="Edm.String" MaxLength="32"/>
+                <Property Name="DTIndicador" Type="Edm.String" MaxLength="32"/>
+                <Property Name="DTId" Type="Edm.Int32"/>
+                <Property Name="DTFechaIngresoSAASAString" Type="Edm.String" MaxLength="5000"/>
+                <Property Name="DTFechaEmision" Type="Edm.String" MaxLength="5000"/>
+                <Property Name="DTFechaEmbarque" Type="Edm.String" MaxLength="5000"/>
+                <Property Name="DTEsMaster" Type="Edm.Int32"/>
+                <Property Name="DTEntidadReguladoraMercPeligrosa" Type="Edm.String" MaxLength="32"/>
+                <Property Name="DTDestinacionCarga" Type="Edm.String" MaxLength="32"/>
+                <Property Name="DTDescripcion" Type="Edm.String" MaxLength="250"/>
+                <Property Name="DTDepositoTemporalDescripcion" Type="Edm.String" MaxLength="5000"/>
+                <Property Name="DTDepositoTemporal" Type="Edm.String" MaxLength="32"/>
+                <Property Name="DTCondicionCarga" Type="Edm.String" MaxLength="256"/>
+                <Property Name="DTCodigoUN" Type="Edm.String" MaxLength="32"/>
+                <Property Name="DTCodigo" Type="Edm.String" MaxLength="64"/>
+                <Property Name="DTBultosSobrantes" Type="Edm.Int32"/>
+                <Property Name="DTBultosRecibidos" Type="Edm.Int32"/>
+                <Property Name="DTBultosManifestados" Type="Edm.Int32"/>
+                <Property Name="DTBultosMalEstado" Type="Edm.Int32"/>
+                <Property Name="DTBultosFaltantes" Type="Edm.Int32"/>
+                <Property Name="DTBultosBuenEstado" Type="Edm.Int32"/>
+                <Property Name="DireccionFiscal" Type="Edm.String" MaxLength="5000"/>
+                <Property Name="DireccionDepositoTemporal" Type="Edm.String" MaxLength="5000"/>
+                <Property Name="DestinoDescripcion" Type="Edm.String" MaxLength="5000"/>
+                <Property Name="Destino" Type="Edm.String" MaxLength="64"/>
+                <Property Name="DescripcionTransportista" Type="Edm.String" MaxLength="250"/>
+                <Property Name="DescripcionSaasa" Type="Edm.String" MaxLength="5000"/>
+                <Property Name="Declaration_DeclarationOfficeID" Type="Edm.String" MaxLength="64"/>
+                <Property Name="ConsolidadorTipoIdentificacion" Type="Edm.String" MaxLength="32"/>
+                <Property Name="ConsolidadorTelefono" Type="Edm.String" MaxLength="32"/>
+                <Property Name="ConsolidadorRol" Type="Edm.String" MaxLength="64"/>
+                <Property Name="ConsolidadorNombre" Type="Edm.String" MaxLength="250"/>
+                <Property Name="ConsolidadorIdentificacion" Type="Edm.String" MaxLength="32"/>
+                <Property Name="ConsolidadorDireccion" Type="Edm.String" MaxLength="250"/>
+                <Property Name="ConsolidadorCorreo" Type="Edm.String" MaxLength="250"/>
+                <Property Name="ConsignatarioTipoIdentificacion" Type="Edm.String" MaxLength="32"/>
+                <Property Name="ConsignatarioTelefono" Type="Edm.String" MaxLength="32"/>
+                <Property Name="ConsignatarioRol" Type="Edm.String" MaxLength="64"/>
+                <Property Name="ConsignatarioNombre" Type="Edm.String" MaxLength="250"/>
+                <Property Name="ConsignatarioIdentificacion" Type="Edm.String" MaxLength="32"/>
+                <Property Name="ConsignatarioDireccion" Type="Edm.String" MaxLength="250"/>
+                <Property Name="ConsignatarioCorreo" Type="Edm.String" MaxLength="250"/>
+                <Property Name="CodVolante" Type="Edm.String" MaxLength="64"/>
+                <Property Name="CodModalidad" Type="Edm.String" MaxLength="200"/>
+                <Property Name="CodigoTransportista" Type="Edm.String" MaxLength="32"/>
+                <Property Name="CodigoTransaccion" Type="Edm.Int32"/>
+                <Property Name="BaseLegalMasterCita" Type="Edm.String" MaxLength="5000"/>
+                <Property Name="BaseLegalMaster" Type="Edm.String" MaxLength="5000"/>
+                <Property Name="BaseLegalHouseCita" Type="Edm.String" MaxLength="5000"/>
+                <Property Name="BaseLegalHouse" Type="Edm.String" MaxLength="5000"/>
+                <Property Name="BaseLegalDescargaMercancia" Type="Edm.String" MaxLength="5000"/>
+                <Property Name="BaseLegalAnexo7Master" Type="Edm.String" MaxLength="5000"/>
+                <Property Name="BaseLegalAnexo7House" Type="Edm.String" MaxLength="5000"/>
+                <Property Name="BaseLegalAnexo7General" Type="Edm.String" MaxLength="5000"/>
+                <Property Name="BaseLegalAnexo6MasterDirecta" Type="Edm.String" MaxLength="5000"/>
+                <Property Name="BaseLegalAnexo6House" Type="Edm.String" MaxLength="5000"/>
+                <Property Name="AgenteCargaIdentificacion" Type="Edm.String" MaxLength="250"/>
+                <Property Name="AgenteCargaDescripcion" Type="Edm.String" MaxLength="5000"/>
+                <Property Name="AgenciaTributaria" Type="Edm.String" MaxLength="64"/>
+            </ComplexType>
+            <ComplexType Name="TUnidadAlmacenamiento">
+                <Property Name="PosicionUA" Type="Edm.Int64"/>
+                <Property Name="Id" Type="Edm.Int32"/>
+                <Property Name="IdEstado" Type="Edm.Int32"/>
+                <Property Name="EsExpo" Type="Edm.Int32"/>
+                <Property Name="CodigoIE" Type="Edm.String" MaxLength="8"/>
+                <Property Name="EstadoDescripcion" Type="Edm.String" MaxLength="5000"/>
+                <Property Name="EstadoCodigoSap" Type="Edm.String" MaxLength="64"/>
+                <Property Name="EstadoCodigo" Type="Edm.String" MaxLength="256"/>
+                <Property Name="UsuarioCreador" Type="Edm.String" MaxLength="32"/>
+                <Property Name="FechaCreacion" Type="Edm.DateTimeOffset"/>
+                <Property Name="TerminalCreacion" Type="Edm.String" MaxLength="64"/>
+                <Property Name="UsuarioModificador" Type="Edm.String" MaxLength="32"/>
+                <Property Name="FechaModificacion" Type="Edm.DateTimeOffset"/>
+                <Property Name="TerminalModificacion" Type="Edm.String" MaxLength="64"/>
+                <Property Name="CodigoUA" Type="Edm.String" MaxLength="100"/>
+                <Property Name="UbicacionId" Type="Edm.Int32"/>
+                <Property Name="EstadoUADescripcion" Type="Edm.String" MaxLength="5"/>
+                <Property Name="EsMalEstado" Type="Edm.Int32"/>
+                <Property Name="UsuarioTransferencia" Type="Edm.String" MaxLength="64"/>
+                <Property Name="AnteriorId" Type="Edm.Int32"/>
+                <Property Name="AnteriorCodigoUA" Type="Edm.String" MaxLength="100"/>
+                <Property Name="EsTransferencia" Type="Edm.Int32"/>
+                <Property Name="FechaTransferencia" Type="Edm.String" MaxLength="5000"/>
+                <Property Name="MotivoTransferenciaId" Type="Edm.Int32"/>
+                <Property Name="MotivoTransferenciaCodigo" Type="Edm.String" MaxLength="256"/>
+                <Property Name="MotivoTransferenciaCodigoSap" Type="Edm.String" MaxLength="64"/>
+                <Property Name="MotivoTransferenciaDescripcion" Type="Edm.String" MaxLength="5000"/>
+                <Property Name="Bultos" Type="Edm.Int32"/>
+                <Property Name="Peso" Type="Edm.Decimal" Scale="3" Precision="12"/>
+                <Property Name="PesoBruto" Type="Edm.Decimal" Scale="3" Precision="12"/>
+                <Property Name="PesoParihuela" Type="Edm.Decimal" Scale="3" Precision="12"/>
+                <Property Name="PesoNeto" Type="Edm.Decimal" Scale="3" Precision="12"/>
+                <Property Name="TieneEmbalaje" Type="Edm.Int32"/>
+                <Property Name="TipoCargaId" Type="Edm.Int32"/>
+                <Property Name="TipoCargaCodigo" Type="Edm.String" MaxLength="256"/>
+                <Property Name="TipoCargaCodigoSap" Type="Edm.String" MaxLength="64"/>
+                <Property Name="TipoCargaDescripcion" Type="Edm.String" MaxLength="5000"/>
+                <Property Name="TipoAlmacenamientoId" Type="Edm.Int32"/>
+                <Property Name="TipoAlmacenamientoCodigo" Type="Edm.String" MaxLength="256"/>
+                <Property Name="TipoAlmacenamientoCodigoSap" Type="Edm.String" MaxLength="64"/>
+                <Property Name="TipoAlmacenamientoDescripcion" Type="Edm.String" MaxLength="5000"/>
+                <Property Name="DocumentoTransporteMadreId" Type="Edm.Int32"/>
+                <Property Name="DocumentoTransporteId" Type="Edm.Int32"/>
+                <Property Name="DocumentoTransporteCodigo" Type="Edm.String" MaxLength="64"/>
+                <Property Name="DocumentoTransporteMasterCodigo" Type="Edm.String" MaxLength="64"/>
+                <Property Name="DocumentoTransporteDescripcion" Type="Edm.String" MaxLength="250"/>
+                <Property Name="IdManifiesto" Type="Edm.Int32"/>
+                <Property Name="ManifiestoCodigo" Type="Edm.String" MaxLength="44"/>
+                <Property Name="Consignatario" Type="Edm.String" MaxLength="250"/>
+                <Property Name="UbicacionCodigo" Type="Edm.String" MaxLength="1027"/>
+                <Property Name="UbicacionIdSede" Type="Edm.Int32"/>
+                <Property Name="UbicacionCodSede" Type="Edm.String" MaxLength="256"/>
+                <Property Name="UbicacionDescSede" Type="Edm.String" MaxLength="5000"/>
+                <Property Name="UbicacionCodSapSede" Type="Edm.String" MaxLength="64"/>
+                <Property Name="UbicacionCodAlmacen" Type="Edm.String" MaxLength="32"/>
+                <Property Name="UbicacionDescAlmacen" Type="Edm.String" MaxLength="5000"/>
+                <Property Name="UbicacionCodSapAlmacen" Type="Edm.String" MaxLength="64"/>
+                <Property Name="UbicacionCodAnaquel" Type="Edm.String" MaxLength="32"/>
+                <Property Name="UbicacionDescAnaquel" Type="Edm.String" MaxLength="5000"/>
+                <Property Name="UbicacionCodSapAnaquel" Type="Edm.String" MaxLength="64"/>
+                <Property Name="UbicacionCodNivel" Type="Edm.String" MaxLength="32"/>
+                <Property Name="UbicacionDescNivel" Type="Edm.String" MaxLength="5000"/>
+                <Property Name="UbicacionCodSapNivel" Type="Edm.String" MaxLength="64"/>
+                <Property Name="UbicacionCodColumna" Type="Edm.String" MaxLength="32"/>
+                <Property Name="UbicacionDescColumna" Type="Edm.String" MaxLength="5000"/>
+                <Property Name="UbicacionCodSapColumna" Type="Edm.String" MaxLength="64"/>
+                <Property Name="UbicacionCodTipoCarga" Type="Edm.String" MaxLength="32"/>
+                <Property Name="UbicacionDescTipoCarga" Type="Edm.String" MaxLength="5000"/>
+                <Property Name="UbicacionCodSapTipoCarga" Type="Edm.String" MaxLength="64"/>
+                <Property Name="UbicacionCodCategoria" Type="Edm.String" MaxLength="32"/>
+                <Property Name="UbicacionDescCategoria" Type="Edm.String" MaxLength="5000"/>
+                <Property Name="UbicacionCodSapCategoria" Type="Edm.String" MaxLength="64"/>
+                <Property Name="VolanteCodigo" Type="Edm.String" MaxLength="64"/>
+                <Property Name="VolanteId" Type="Edm.Int32"/>
+                <Property Name="IsVolante" Type="Edm.Int32"/>
+                <Property Name="IdIngresoExportacion" Type="Edm.Int32"/>
+                <Property Name="NroDAM" Type="Edm.String" MaxLength="128"/>
+                <Property Name="Almacen" Type="Edm.Int32"/>
+                <Property Name="AlmacenCampo" Type="Edm.String" MaxLength="256"/>
+                <Property Name="ConcFacturableCodigo" Type="Edm.String" MaxLength="64"/>
+                <Property Name="IidConcepto" Type="Edm.String" MaxLength="64"/>
+                <Property Name="ConcFacturableDescripcion" Type="Edm.String" MaxLength="64"/>
+                <Property Name="Balanza" Type="Edm.String" MaxLength="32"/>
+                <Property Name="UbicacionZRId" Type="Edm.Int32"/>
+                <Property Name="iIdUbicacionInicial" Type="Edm.Int32"/>
+                <Property Name="IdVolante" Type="Edm.Int32"/>
+                <Property Name="IdFoto1" Type="Edm.Int32"/>
+                <Property Name="IdFoto2" Type="Edm.Int32"/>
+                <Property Name="IdFoto3" Type="Edm.Int32"/>
+                <Property Name="IdFoto4" Type="Edm.Int32"/>
+                <Property Name="FechaTarjaUA" Type="Edm.String" MaxLength="5000"/>
+                <Property Name="UASHC" Type="Edm.String" MaxLength="256"/>
+                <Property Name="FechaIngresoAlmacenString" Type="Edm.String" MaxLength="5000"/>
+            </ComplexType>
+            <ComplexType Name="TFormatoInformacionWareHouseIE">
+                <Property Name="Id" Type="Edm.Int32"/>
+                <Property Name="IdEstado" Type="Edm.Int32"/>
+                <Property Name="EstadoDescripcion" Type="Edm.String" MaxLength="5000"/>
+                <Property Name="EstadoCodigo" Type="Edm.String" MaxLength="256"/>
+                <Property Name="UsuarioCreador" Type="Edm.String" MaxLength="32"/>
+                <Property Name="FechaCreacion" Type="Edm.DateTimeOffset"/>
+                <Property Name="FechaHoraRecepcionDAM" Type="Edm.String" MaxLength="5000"/>
+                <Property Name="TerminalCreacion" Type="Edm.String" MaxLength="64"/>
+                <Property Name="UsuarioModificador" Type="Edm.String" MaxLength="32"/>
+                <Property Name="FechaModificacion" Type="Edm.DateTimeOffset"/>
+                <Property Name="FechaHoraInicioRecepcion" Type="Edm.String" MaxLength="5000"/>
+                <Property Name="FechaHoraFinRecepcion" Type="Edm.String" MaxLength="5000"/>
+                <Property Name="DireccionFiscal" Type="Edm.String" MaxLength="5000"/>
+                <Property Name="RucSaasa" Type="Edm.String" MaxLength="5000"/>
+                <Property Name="DescripcionSaasa" Type="Edm.String" MaxLength="5000"/>
+                <Property Name="CodWarehouse" Type="Edm.String" MaxLength="64"/>
+                <Property Name="DTId" Type="Edm.Int32"/>
+                <Property Name="DTMasterCodigo" Type="Edm.String" MaxLength="64"/>
+                <Property Name="ExpedidorNombre" Type="Edm.String" MaxLength="250"/>
+                <Property Name="AgenciaCargaDescripcion" Type="Edm.String" MaxLength="5000"/>
+                <Property Name="AgenciaCargaRuc" Type="Edm.String" MaxLength="256"/>
+                <Property Name="AgenciaCargaId" Type="Edm.Int32"/>
+                <Property Name="AgenciaCargaIdPadre" Type="Edm.Int32"/>
+                <Property Name="AgenteCargaDescripcion" Type="Edm.String" MaxLength="5000"/>
+                <Property Name="AgenteCargaDNI" Type="Edm.String" MaxLength="256"/>
+                <Property Name="AgenteMail" Type="Edm.String" MaxLength="100"/>
+                <Property Name="Origen" Type="Edm.String" MaxLength="64"/>
+                <Property Name="ChoferNombre" Type="Edm.String" MaxLength="260"/>
+                <Property Name="Matricula" Type="Edm.String" MaxLength="32"/>
+                <Property Name="DTDescripcion" Type="Edm.String" MaxLength="250"/>
+                <Property Name="DTCodigo" Type="Edm.String" MaxLength="64"/>
+                <Property Name="ConsignatarioNombre" Type="Edm.String" MaxLength="250"/>
+                <Property Name="DescripcionTransportista" Type="Edm.String" MaxLength="250"/>
+                <Property Name="DNI" Type="Edm.String" MaxLength="64"/>
+                <Property Name="Destino" Type="Edm.String" MaxLength="64"/>
+                <Property Name="Brevete" Type="Edm.String" MaxLength="64"/>
+                <Property Name="CodigoDique" Type="Edm.String" MaxLength="32"/>
+                <Property Name="MovimientoCamionesId" Type="Edm.Int32"/>
+                <Property Name="IdTipoEmbalaje" Type="Edm.String" MaxLength="5000"/>
+                <Property Name="TipoEmbalajeDescripcion" Type="Edm.String" MaxLength="5000"/>
+                <Property Name="IdTipoAlmacenamiento" Type="Edm.Int32"/>
+                <Property Name="TipoAlmacenamientoDescripcion" Type="Edm.String" MaxLength="5000"/>
+                <Property Name="CodicionEmbalaje" Type="Edm.Int32"/>
+                <Property Name="NroDAM" Type="Edm.String" MaxLength="32"/>
+                <Property Name="AgenciaAduanaDescripcion" Type="Edm.String" MaxLength="5000"/>
+                <Property Name="NumeroDocumentoAduana" Type="Edm.String" MaxLength="260"/>
+                <Property Name="AgenteAduanaDescripcion" Type="Edm.String" MaxLength="5000"/>
+                <Property Name="CitaWareHouse" Type="Edm.String" MaxLength="5000"/>
+                <Property Name="Observaciones" Type="Edm.String" MaxLength="250"/>
+                <Property Name="IdWarehouse" Type="Edm.Int32"/>
+                <Property Name="CodigoParihuela" Type="Edm.String" MaxLength="16"/>
+                <Property Name="BultosRecibidos" Type="Edm.Int32"/>
+                <Property Name="PesoRecibido" Type="Edm.Decimal" Precision="34"/>
+                <Property Name="Temperatura" Type="Edm.Decimal" Scale="3" Precision="12"/>
+                <Property Name="Alto" Type="Edm.Decimal" Scale="3" Precision="12"/>
+                <Property Name="Ancho" Type="Edm.Decimal" Scale="3" Precision="12"/>
+                <Property Name="Largo" Type="Edm.Decimal" Scale="3" Precision="12"/>
+                <Property Name="Volumen" Type="Edm.Decimal" Scale="2" Precision="10"/>
+                <Property Name="IdUA" Type="Edm.Int32"/>
+                <Property Name="FechaHoraInicioInspeccionString" Type="Edm.String" MaxLength="5000"/>
+                <Property Name="FechaHoraFinInspeccionString" Type="Edm.String" MaxLength="5000"/>
+                <Property Name="Condicion" Type="Edm.String" MaxLength="11"/>
+            </ComplexType>
+            <ComplexType Name="TFormatoActaInventario">
+                <Property Name="VersionOMA" Type="Edm.String" MaxLength="64"/>
+                <Property Name="OrganizacionNombreAduana" Type="Edm.String" MaxLength="64"/>
+                <Property Name="PaisAduana" Type="Edm.String" MaxLength="64"/>
+                <Property Name="AgenciaTributaria" Type="Edm.String" MaxLength="64"/>
+                <Property Name="CodigoTransaccion" Type="Edm.Int32"/>
+                <Property Name="FechaGeneracion" Type="Edm.String" MaxLength="5000"/>
+                <Property Name="EmisorVersionDocumento" Type="Edm.String" MaxLength="64"/>
+                <Property Name="EmisorIdentificacion" Type="Edm.String" MaxLength="64"/>
+                <Property Name="EmisorTipoIdentificacion" Type="Edm.String" MaxLength="64"/>
+                <Property Name="EmisorTipoRol" Type="Edm.String" MaxLength="64"/>
+                <Property Name="Declaration_DeclarationOfficeID" Type="Edm.String" MaxLength="64"/>
+                <Property Name="ManifiestoId" Type="Edm.Int32"/>
+                <Property Name="ManifiestoTipo" Type="Edm.String" MaxLength="64"/>
+                <Property Name="ManifiestoAnio" Type="Edm.Int32"/>
+                <Property Name="ManifiestoNumero" Type="Edm.String" MaxLength="32"/>
+                <Property Name="ManifiestoJurisdicionAduanera" Type="Edm.String" MaxLength="64"/>
+                <Property Name="ManifiestoNumeroIncidencia" Type="Edm.Int32"/>
+                <Property Name="ManifiestoComentarioIncidencia" Type="Edm.String" MaxLength="300"/>
+                <Property Name="ManifiestoCampoTipoManifiesto" Type="Edm.String" MaxLength="256"/>
+                <Property Name="ManifiestoDescTipoManifiesto" Type="Edm.String" MaxLength="5000"/>
+                <Property Name="TransporteMatricula" Type="Edm.String" MaxLength="60"/>
+                <Property Name="TransporteVia" Type="Edm.String" MaxLength="32"/>
+                <Property Name="TransporteFechaEstimadaLlegada" Type="Edm.String" MaxLength="5000"/>
+                <Property Name="ManifiestoFechaHoraLlegadaATAString" Type="Edm.String" MaxLength="5000"/>
+                <Property Name="ManifiestoFechaLlegadaATAString" Type="Edm.String" MaxLength="5000"/>
+                <Property Name="TransporteNumeroViaje" Type="Edm.String" MaxLength="20"/>
+                <Property Name="FechaFinTarja" Type="Edm.String" MaxLength="5000"/>
+                <Property Name="TransportistaIdentificacion" Type="Edm.String" MaxLength="32"/>
+                <Property Name="TransportistaTipoIdentificacion" Type="Edm.String" MaxLength="64"/>
+                <Property Name="TransportistaNombre" Type="Edm.String" MaxLength="250"/>
+                <Property Name="TransportistaRol" Type="Edm.String" MaxLength="64"/>
+                <Property Name="TransportistaDireccion" Type="Edm.String" MaxLength="250"/>
+                <Property Name="AgenteCargaIdentificacion" Type="Edm.String" MaxLength="250"/>
+                <Property Name="AgenteCargaDescripcion" Type="Edm.String" MaxLength="5000"/>
+                <Property Name="ConsignatarioIdentificacion" Type="Edm.String" MaxLength="32"/>
+                <Property Name="ConsignatarioTipoIdentificacion" Type="Edm.String" MaxLength="32"/>
+                <Property Name="DescripcionTipoIdentificacion" Type="Edm.String" MaxLength="256"/>
+                <Property Name="ConsignatarioNombre" Type="Edm.String" MaxLength="250"/>
+                <Property Name="ConsignatarioDireccion" Type="Edm.String" MaxLength="250"/>
+                <Property Name="ConsignatarioTelefono" Type="Edm.String" MaxLength="32"/>
+                <Property Name="ConsignatarioCorreo" Type="Edm.String" MaxLength="250"/>
+                <Property Name="ConsignatarioRol" Type="Edm.String" MaxLength="64"/>
+                <Property Name="EmbarcadorIdentificacion" Type="Edm.String" MaxLength="32"/>
+                <Property Name="EmbarcadorTipoIdentificacion" Type="Edm.String" MaxLength="32"/>
+                <Property Name="EmbarcadorNombre" Type="Edm.String" MaxLength="250"/>
+                <Property Name="EmbarcadorDireccion" Type="Edm.String" MaxLength="250"/>
+                <Property Name="EmbarcadorTelefono" Type="Edm.String" MaxLength="32"/>
+                <Property Name="EmbarcadorCorreo" Type="Edm.String" MaxLength="250"/>
+                <Property Name="EmbarcadorRol" Type="Edm.String" MaxLength="64"/>
+                <Property Name="ConsolidadorIdentificacion" Type="Edm.String" MaxLength="32"/>
+                <Property Name="ConsolidadorTipoIdentificacion" Type="Edm.String" MaxLength="32"/>
+                <Property Name="ConsolidadorNombre" Type="Edm.String" MaxLength="250"/>
+                <Property Name="ConsolidadorDireccion" Type="Edm.String" MaxLength="250"/>
+                <Property Name="ConsolidadorTelefono" Type="Edm.String" MaxLength="32"/>
+                <Property Name="ConsolidadorCorreo" Type="Edm.String" MaxLength="250"/>
+                <Property Name="ConsolidadorRol" Type="Edm.String" MaxLength="64"/>
+                <Property Name="NotificadoIdentificacion" Type="Edm.String" MaxLength="32"/>
+                <Property Name="NotificadoTipoIdentificacion" Type="Edm.String" MaxLength="32"/>
+                <Property Name="NotificadoNombre" Type="Edm.String" MaxLength="250"/>
+                <Property Name="NotificadoDireccion" Type="Edm.String" MaxLength="250"/>
+                <Property Name="NotificadoTelefono" Type="Edm.String" MaxLength="32"/>
+                <Property Name="NotificadoCorreo" Type="Edm.String" MaxLength="250"/>
+                <Property Name="NotificadoRol" Type="Edm.String" MaxLength="64"/>
+                <Property Name="DTNumeroDetalle" Type="Edm.Int32"/>
+                <Property Name="DTSecuencia" Type="Edm.Int32"/>
+                <Property Name="DTDescripcion" Type="Edm.String" MaxLength="250"/>
+                <Property Name="DTCodigo" Type="Edm.String" MaxLength="64"/>
+                <Property Name="DTMasterCodigo" Type="Edm.String" MaxLength="64"/>
+                <Property Name="DTHouseCodigo" Type="Edm.String" MaxLength="64"/>
+                <Property Name="DTDAM" Type="Edm.String" MaxLength="128"/>
+                <Property Name="DTId" Type="Edm.Int32"/>
+                <Property Name="DTEsMaster" Type="Edm.Int32"/>
+                <Property Name="DTMasterId" Type="Edm.Int32"/>
+                <Property Name="DTTipoBulto" Type="Edm.String" MaxLength="32"/>
+                <Property Name="DTTipoBultoDescripcion" Type="Edm.String" MaxLength="5000"/>
+                <Property Name="DTDepositoTemporal" Type="Edm.String" MaxLength="32"/>
+                <Property Name="DTDepositoTemporalDescripcion" Type="Edm.String" MaxLength="5000"/>
+                <Property Name="DTDepositoTemporalRuc" Type="Edm.String" MaxLength="64"/>
+                <Property Name="DTBultosManifestados" Type="Edm.Int32"/>
+                <Property Name="DTPesoManifestado" Type="Edm.Decimal" Scale="3" Precision="18"/>
+                <Property Name="DTVolumenManifestado" Type="Edm.Decimal" Scale="3" Precision="12"/>
+                <Property Name="DTBultosRecibidos" Type="Edm.Int32"/>
+                <Property Name="DTPesoRecibido" Type="Edm.Decimal" Scale="3" Precision="18"/>
+                <Property Name="DTBultosFaltantes" Type="Edm.Int32"/>
+                <Property Name="DTPesoFaltante" Type="Edm.Decimal" Scale="3" Precision="28"/>
+                <Property Name="DTBultosSobrantes" Type="Edm.Int32"/>
+                <Property Name="DTPesoSobrante" Type="Edm.Decimal" Scale="3" Precision="28"/>
+                <Property Name="DTBultosBuenEstado" Type="Edm.Int32"/>
+                <Property Name="DTPesoBuenEstado" Type="Edm.Decimal" Scale="3" Precision="28"/>
+                <Property Name="DTBultosMalEstado" Type="Edm.Int32"/>
+                <Property Name="DTPesoMalEstado" Type="Edm.Decimal" Scale="3" Precision="18"/>
+                <Property Name="DTNaturalezaCarga" Type="Edm.String" MaxLength="32"/>
+                <Property Name="DTDestinacionCarga" Type="Edm.String" MaxLength="32"/>
+                <Property Name="DTPuertoFinal" Type="Edm.String" MaxLength="64"/>
+                <Property Name="DTCondicionCarga" Type="Edm.String" MaxLength="256"/>
+                <Property Name="DTCondicionCargaDescripcion" Type="Edm.String" MaxLength="5000"/>
+                <Property Name="UnidadPeso" Type="Edm.String" MaxLength="64"/>
+                <Property Name="DTFechaEmision" Type="Edm.String" MaxLength="5000"/>
+                <Property Name="DTIndicador" Type="Edm.String" MaxLength="32"/>
+                <Property Name="DTPuertoEmbarque" Type="Edm.String" MaxLength="32"/>
+                <Property Name="DTFechaEmbarque" Type="Edm.String" MaxLength="5000"/>
+                <Property Name="DTEntidadReguladoraMercPeligrosa" Type="Edm.String" MaxLength="32"/>
+                <Property Name="DTCodigoUN" Type="Edm.String" MaxLength="32"/>
+                <Property Name="DTVinVehiculos" Type="Edm.String" MaxLength="32"/>
+                <Property Name="DTTipo" Type="Edm.String" MaxLength="32"/>
+                <Property Name="DTLugarEmision" Type="Edm.String" MaxLength="32"/>
+                <Property Name="FleteId" Type="Edm.Int32"/>
+                <Property Name="FleteTipoPago" Type="Edm.String" MaxLength="32"/>
+                <Property Name="FleteTipo" Type="Edm.String" MaxLength="32"/>
+                <Property Name="FleteMonto" Type="Edm.Decimal" Scale="3" Precision="12"/>
+                <Property Name="FleteMoneda" Type="Edm.String" MaxLength="32"/>
+                <Property Name="NumeroOrdenNumeracion" Type="Edm.String" MaxLength="32"/>
+                <Property Name="TicketNumeracion" Type="Edm.String" MaxLength="32"/>
+                <Property Name="Origen" Type="Edm.String" MaxLength="64"/>
+                <Property Name="OrigenDescripcion" Type="Edm.String" MaxLength="5000"/>
+                <Property Name="Destino" Type="Edm.String" MaxLength="64"/>
+                <Property Name="DestinoDescripcion" Type="Edm.String" MaxLength="5000"/>
+                <Property Name="PuntoLlegada" Type="Edm.String" MaxLength="64"/>
+                <Property Name="PuntoLlegadaDescripcion" Type="Edm.String" MaxLength="5000"/>
+                <Property Name="PuntoLlegadaRuc" Type="Edm.String" MaxLength="64"/>
+                <Property Name="TerminalOrigen" Type="Edm.String" MaxLength="64"/>
+                <Property Name="TerminalOrigenDescripcion" Type="Edm.String" MaxLength="5000"/>
+                <Property Name="TerminalDestino" Type="Edm.String" MaxLength="64"/>
+                <Property Name="TerminalDestinoDescripcion" Type="Edm.String" MaxLength="5000"/>
+                <Property Name="CodModalidad" Type="Edm.String" MaxLength="200"/>
+                <Property Name="ModalidadDescripcion" Type="Edm.String" MaxLength="5000"/>
+                <Property Name="IdRegimen" Type="Edm.Int32"/>
+                <Property Name="RegimenAduanaCodigo" Type="Edm.String" MaxLength="256"/>
+                <Property Name="RegimenAduanaCodigoSAP" Type="Edm.String" MaxLength="64"/>
+                <Property Name="RegimenAduanaDescripcion" Type="Edm.String" MaxLength="5000"/>
+                <Property Name="TipoCargaCodigo" Type="Edm.String" MaxLength="256"/>
+                <Property Name="TipoCargaDescripcion" Type="Edm.String" MaxLength="5000"/>
+                <Property Name="TipoCargaCodigoSap" Type="Edm.String" MaxLength="64"/>
+                <Property Name="EsMalEstado" Type="Edm.Int32"/>
+                <Property Name="TipoAlmacenamientoCodigo" Type="Edm.String" MaxLength="256"/>
+                <Property Name="TipoAlmacenamientoDescripcion" Type="Edm.String" MaxLength="5000"/>
+                <Property Name="TipoAlmacenamientoCodigoSap" Type="Edm.String" MaxLength="64"/>
+                <Property Name="UbicacionCodAlmacen" Type="Edm.String" MaxLength="32"/>
+                <Property Name="UbicacionDescAlmacen" Type="Edm.String" MaxLength="5000"/>
+                <Property Name="UbicacionCodSapAlmacen" Type="Edm.String" MaxLength="64"/>
+                <Property Name="FechaTerminoDescarga" Type="Edm.DateTimeOffset"/>
+                <Property Name="FechaHoraTerminoDescargaString" Type="Edm.String" MaxLength="5000"/>
+                <Property Name="FechaTerminoDescargaString" Type="Edm.String" MaxLength="5000"/>
+                <Property Name="ItinerarioId" Type="Edm.Int32"/>
+                <Property Name="ItinerarioNroViaje" Type="Edm.String" MaxLength="32"/>
+                <Property Name="ManifiestoFechaInicioTarja" Type="Edm.DateTimeOffset"/>
+                <Property Name="ManifiestoFechaHoraInicioTarjaString" Type="Edm.String" MaxLength="5000"/>
+                <Property Name="ManifiestoFechaInicioTarjaString" Type="Edm.String" MaxLength="5000"/>
+                <Property Name="ManifiestoFechaFinTarja" Type="Edm.DateTimeOffset"/>
+                <Property Name="ManifiestoFechaHoraFinTarjaString" Type="Edm.String" MaxLength="5000"/>
+                <Property Name="ManifiestoFechaFinTarjaString" Type="Edm.String" MaxLength="5000"/>
+                <Property Name="ItinerarioCodigoTransportista" Type="Edm.String" MaxLength="32"/>
+                <Property Name="ItinerarioDescripcionTransportista" Type="Edm.String" MaxLength="250"/>
+                <Property Name="ItinerarioDireccionTransportista" Type="Edm.String" MaxLength="250"/>
+                <Property Name="ManifiestoTransportistaCodigo" Type="Edm.String" MaxLength="32"/>
+                <Property Name="ManifiestoTransportistaDescripcion" Type="Edm.String" MaxLength="250"/>
+                <Property Name="ManifiestoTransportistaDireccion" Type="Edm.String" MaxLength="250"/>
+                <Property Name="ManifiestoIdEstadoTransmisionMD" Type="Edm.Int32"/>
+                <Property Name="ManifiestoIdEstadoIRM" Type="Edm.Int32"/>
+                <Property Name="ManifiestoIdEstadoActaInventario" Type="Edm.Int32"/>
+                <Property Name="ManifiestoComentario" Type="Edm.String" MaxLength="300"/>
+                <Property Name="CodigoTransportista" Type="Edm.String" MaxLength="32"/>
+                <Property Name="IdTransportista" Type="Edm.Int32"/>
+                <Property Name="DescripcionTransportista" Type="Edm.String" MaxLength="250"/>
+                <Property Name="ManifiestoActaInventarioNroFormato" Type="Edm.String" MaxLength="17"/>
+                <Property Name="ManifiestoActaInventarioObs" Type="Edm.String" MaxLength="5000"/>
+                <Property Name="ItinerarioOrigen" Type="Edm.String" MaxLength="32"/>
+                <Property Name="ItinerarioCodigoYata" Type="Edm.String" MaxLength="50"/>
+                <Property Name="NumeroPrecinto" Type="Edm.Int32"/>
+                <Property Name="IdVolante" Type="Edm.Int32"/>
+                <Property Name="CodVolante" Type="Edm.String" MaxLength="64"/>
+                <Property Name="IsVolante" Type="Edm.Int32"/>
+                <Property Name="IdContenedor" Type="Edm.Int32"/>
+                <Property Name="NumeroContenedor" Type="Edm.String" MaxLength="64"/>
+                <Property Name="DireccionDepositoTemporal" Type="Edm.String" MaxLength="5000"/>
+                <Property Name="DireccionFiscal" Type="Edm.String" MaxLength="5000"/>
+                <Property Name="RucSaasa" Type="Edm.String" MaxLength="5000"/>
+                <Property Name="DescripcionSaasa" Type="Edm.String" MaxLength="5000"/>
+                <Property Name="BaseLegalMaster" Type="Edm.String" MaxLength="5000"/>
+                <Property Name="BaseLegalMasterCita" Type="Edm.String" MaxLength="5000"/>
+                <Property Name="BaseLegalHouse" Type="Edm.String" MaxLength="5000"/>
+                <Property Name="BaseLegalHouseCita" Type="Edm.String" MaxLength="5000"/>
+                <Property Name="BaseLegalMasterMalaCond" Type="Edm.String" MaxLength="5000"/>
+                <Property Name="BaseLegalMasterMalaCondCita" Type="Edm.String" MaxLength="5000"/>
+                <Property Name="BaseLegalHouseMalaCond" Type="Edm.String" MaxLength="5000"/>
+                <Property Name="BaseLegalHouseMalaCondCita" Type="Edm.String" MaxLength="5000"/>
+                <Property Name="BaseLegalDescargaMercancia" Type="Edm.String" MaxLength="5000"/>
+                <Property Name="BaseLegalAnexo6MasterDirecta" Type="Edm.String" MaxLength="5000"/>
+                <Property Name="BaseLegalAnexo6House" Type="Edm.String" MaxLength="5000"/>
+                <Property Name="BaseLegalAnexo7General" Type="Edm.String" MaxLength="5000"/>
+                <Property Name="BaseLegalAnexo7Master" Type="Edm.String" MaxLength="5000"/>
+                <Property Name="BaseLegalAnexo7House" Type="Edm.String" MaxLength="5000"/>
+                <Property Name="DTFechaIngresoSAASAString" Type="Edm.String" MaxLength="5000"/>
+                <Property Name="ItinerarioCodigoAerolinea" Type="Edm.String" MaxLength="50"/>
+                <Property Name="NaveDescripcion" Type="Edm.String" MaxLength="5000"/>
+                <Property Name="FechaZarpe" Type="Edm.DateTimeOffset"/>
+                <Property Name="FechaZarpeString" Type="Edm.String" MaxLength="5000"/>
+                <Property Name="Marcas" Type="Edm.String" MaxLength="250"/>
+                <Property Name="RepresentanteLegalOrigen" Type="Edm.String" MaxLength="5000"/>
+                <Property Name="RepresentanteLegalDestino" Type="Edm.String" MaxLength="5000"/>
+                <Property Name="Foto1" Type="Edm.Int32"/>
+                <Property Name="Foto2" Type="Edm.Int32"/>
+                <Property Name="Foto3" Type="Edm.Int32"/>
+                <Property Name="Foto4" Type="Edm.Int32"/>
+                <Property Name="CodigoUA" Type="Edm.String" MaxLength="100"/>
+                <Property Name="EstadoCodigo" Type="Edm.String" MaxLength="256"/>
+                <Property Name="CapitanTransporte" Type="Edm.String" MaxLength="250"/>
+            </ComplexType>
+            <ComplexType Name="TManifiestoAdjuntoV2">
+                <Property Name="Id" Type="Edm.Int32"/>
+                <Property Name="IdEstado" Type="Edm.Int32"/>
+                <Property Name="IdManifiesto" Type="Edm.Int32"/>
+                <Property Name="IdTipoAdjunto" Type="Edm.Int32"/>
+                <Property Name="TipoAdjuntoDescripcion" Type="Edm.String" MaxLength="5000"/>
+                <Property Name="IdAdjunto" Type="Edm.String" MaxLength="500"/>
+                <Property Name="NombreAdjunto" Type="Edm.String" MaxLength="500"/>
+                <Property Name="RutaAdjunto" Type="Edm.String" MaxLength="536"/>
+                <Property Name="CodigoSap" Type="Edm.String" MaxLength="64"/>
+                <Property Name="enabledInput" Type="Edm.Int32"/>
+                <Property Name="icon" Type="Edm.String" MaxLength="15"/>
+                <Property Name="DocumentoTransporteId" Type="Edm.Int32"/>
+                <Property Name="DocumentoTransporteMadreId" Type="Edm.Int32"/>
+            </ComplexType>
+            <ComplexType Name="TEjecucionServiciosIntermedios">
+                <Property Name="Id" Type="Edm.Int32"/>
+                <Property Name="IdEstado" Type="Edm.Int32"/>
+                <Property Name="FechaCreacion" Type="Edm.DateTimeOffset"/>
+                <Property Name="FechaModificacion" Type="Edm.DateTimeOffset"/>
+                <Property Name="CodigoSolicitud" Type="Edm.String" MaxLength="64"/>
+                <Property Name="CodVolante" Type="Edm.String" MaxLength="64"/>
+                <Property Name="DescripcionVolante" Type="Edm.String" MaxLength="64"/>
+                <Property Name="NumeroDAM" Type="Edm.String" MaxLength="64"/>
+                <Property Name="Solicitante" Type="Edm.String" MaxLength="250"/>
+                <Property Name="NumeroDocumento" Type="Edm.String" MaxLength="32"/>
+                <Property Name="CarnetSunat" Type="Edm.String" MaxLength="64"/>
+                <Property Name="AgenciaAduana" Type="Edm.String" MaxLength="64"/>
+                <Property Name="AgenciaAduanaDescripcion" Type="Edm.String" MaxLength="250"/>
+                <Property Name="FuncionarioInspeccion" Type="Edm.String" MaxLength="250"/>
+                <Property Name="Turno" Type="Edm.String" MaxLength="32"/>
+                <Property Name="TurnoDescripcion" Type="Edm.String" MaxLength="64"/>
+                <Property Name="FechaHora" Type="Edm.DateTimeOffset"/>
+                <Property Name="FechaHoraString" Type="Edm.String" MaxLength="5000"/>
+                <Property Name="IsVolante" Type="Edm.Int32"/>
+                <Property Name="IdDocumentoTransporte" Type="Edm.Int32"/>
+                <Property Name="EstadoSolicitudId" Type="Edm.Int32"/>
+                <Property Name="EstadoSolicitudDescripcion" Type="Edm.String" MaxLength="250"/>
+                <Property Name="EstadoSolicitudPadre" Type="Edm.String" MaxLength="250"/>
+                <Property Name="EstadoSolicitudCampo" Type="Edm.String" MaxLength="250"/>
+                <Property Name="ZonaRFisico" Type="Edm.String" MaxLength="250"/>
+                <Property Name="ZonaRFisicoDescripcion" Type="Edm.String" MaxLength="250"/>
+                <Property Name="Tipificacion" Type="Edm.String" MaxLength="250"/>
+                <Property Name="TipificacionDescripcion" Type="Edm.String" MaxLength="250"/>
+                <Property Name="Comentario" Type="Edm.String" MaxLength="250"/>
+                <Property Name="UbicacionServicioIntermedio" Type="Edm.Int32"/>
+                <Property Name="UbicacionServicioIntermedioDescripcion" Type="Edm.String" MaxLength="1027"/>
+                <Property Name="FechaInicioEjecucion" Type="Edm.DateTimeOffset"/>
+                <Property Name="FechaFinEjecucion" Type="Edm.DateTimeOffset"/>
+                <Property Name="IdServicioIntermedioConceptoFacturable" Type="Edm.Int32"/>
+                <Property Name="IdSolicitudServicioIntermedio" Type="Edm.Int32"/>
+                <Property Name="ServicioCodigo" Type="Edm.String" MaxLength="64"/>
+                <Property Name="Centro" Type="Edm.String" MaxLength="64"/>
+                <Property Name="Sector" Type="Edm.String" MaxLength="64"/>
+                <Property Name="Canal" Type="Edm.String" MaxLength="64"/>
+                <Property Name="OrgVta" Type="Edm.String" MaxLength="250"/>
+                <Property Name="Prdha" Type="Edm.String" MaxLength="250"/>
+                <Property Name="Jerarquia" Type="Edm.String" MaxLength="64"/>
+                <Property Name="ServicioDescripcion" Type="Edm.String" MaxLength="5000"/>
+                <Property Name="CentroDescripcion" Type="Edm.String" MaxLength="250"/>
+                <Property Name="SectorDescripcion" Type="Edm.String" MaxLength="250"/>
+                <Property Name="CanalDescripcion" Type="Edm.String" MaxLength="250"/>
+                <Property Name="OrgVtaDescripcion" Type="Edm.String" MaxLength="250"/>
+                <Property Name="PrdhaDescripcion" Type="Edm.String" MaxLength="250"/>
+                <Property Name="JerarquiaDescripcion" Type="Edm.String" MaxLength="250"/>
+                <Property Name="EstadoServicioId" Type="Edm.Int32"/>
+                <Property Name="EstadoServicioDescripcion" Type="Edm.String" MaxLength="250"/>
+                <Property Name="EstadoServicioPadre" Type="Edm.String" MaxLength="250"/>
+                <Property Name="EstadoServicioCampo" Type="Edm.String" MaxLength="250"/>
+                <Property Name="ServicioAdicional" Type="Edm.Int32"/>
+                <Property Name="ServicioPrimeraPosicion" Type="Edm.Int32"/>
+                <Property Name="DTEsMaster" Type="Edm.Int32"/>
+                <Property Name="DTMadreId" Type="Edm.Int32"/>
+                <Property Name="DTCodigo" Type="Edm.String" MaxLength="64"/>
+                <Property Name="DTDescripcion" Type="Edm.String" MaxLength="250"/>
+                <Property Name="DTBultosManifestados" Type="Edm.Int32"/>
+                <Property Name="DTPesoManifestado" Type="Edm.Decimal" Scale="3" Precision="12"/>
+                <Property Name="DTBultosRecibidos" Type="Edm.Decimal" Precision="34"/>
+                <Property Name="DTPesoRecibido" Type="Edm.Decimal" Precision="34"/>
+                <Property Name="DTBultosFaltantes" Type="Edm.Int32"/>
+                <Property Name="DTPesoFaltante" Type="Edm.Decimal" Scale="3" Precision="12"/>
+                <Property Name="DTBultosSobrantes" Type="Edm.Int32"/>
+                <Property Name="DTPesoSobrante" Type="Edm.Decimal" Scale="3" Precision="12"/>
+                <Property Name="DTBultosMalEstado" Type="Edm.Int32"/>
+                <Property Name="DTPesoMalEstado" Type="Edm.Decimal" Scale="3" Precision="12"/>
+                <Property Name="DTBultosBuenEstado" Type="Edm.Int32"/>
+                <Property Name="DTPesoBuenEstado" Type="Edm.Decimal" Scale="3" Precision="12"/>
+                <Property Name="SectorDescripcionSap" Type="Edm.String" MaxLength="5000"/>
+                <Property Name="SectorCodigoSAP" Type="Edm.String" MaxLength="64"/>
+                <Property Name="CodigoTransaccionOpcion" Type="Edm.String" MaxLength="256"/>
+                <Property Name="DescripcionTransaccionOpcion" Type="Edm.String" MaxLength="5000"/>
+                <Property Name="FileNameCargaActaRuta" Type="Edm.String" MaxLength="286"/>
+                <Property Name="FileNameCargaActa" Type="Edm.String" MaxLength="250"/>
+                <Property Name="FileTypeCargaActa" Type="Edm.String" MaxLength="250"/>
+                <Property Name="IdFileCargaActa" Type="Edm.String" MaxLength="250"/>
+            </ComplexType>
+            <ComplexType Name="TInmovilizacion">
+                <Property Name="Id" Type="Edm.Int32"/>
+                <Property Name="IdEstado" Type="Edm.Int32"/>
+                <Property Name="EstadoCodigo" Type="Edm.String" MaxLength="256"/>
+                <Property Name="EstadoDescripcion" Type="Edm.String" MaxLength="5000"/>
+                <Property Name="IdEntidad" Type="Edm.Int32"/>
+                <Property Name="EntidadCodigo" Type="Edm.String" MaxLength="256"/>
+                <Property Name="EntidadDescripcion" Type="Edm.String" MaxLength="5000"/>
+                <Property Name="IdNivel" Type="Edm.Int32"/>
+                <Property Name="NivelCodigo" Type="Edm.String" MaxLength="256"/>
+                <Property Name="NivelDescripcion" Type="Edm.String" MaxLength="5000"/>
+                <Property Name="IdUA" Type="Edm.Int32"/>
+                <Property Name="IdVolante" Type="Edm.Int32"/>
+                <Property Name="IdGuia" Type="Edm.Int32"/>
+                <Property Name="CodigoUA" Type="Edm.String" MaxLength="100"/>
+                <Property Name="CodigoVolante" Type="Edm.String" MaxLength="64"/>
+                <Property Name="CodigoGuia" Type="Edm.String" MaxLength="64"/>
+                <Property Name="DAM" Type="Edm.String" MaxLength="128"/>
+                <Property Name="Bultos" Type="Edm.Int32"/>
+                <Property Name="DocInmovilizacion" Type="Edm.String" MaxLength="100"/>
+                <Property Name="Observacion" Type="Edm.String" MaxLength="500"/>
+                <Property Name="IdTipoAdjunto" Type="Edm.String" MaxLength="100"/>
+                <Property Name="TipoAdjuntoCodigo" Type="Edm.String" MaxLength="1"/>
+                <Property Name="TipoAdjuntoDescripcion" Type="Edm.String" MaxLength="250"/>
+                <Property Name="IdFile" Type="Edm.String" MaxLength="100"/>
+                <Property Name="FileName" Type="Edm.String" MaxLength="250"/>
+                <Property Name="FileType" Type="Edm.String" MaxLength="100"/>
+                <Property Name="FileNameRuta" Type="Edm.String" MaxLength="136"/>
+                <Property Name="NumeroActa" Type="Edm.String" MaxLength="64"/>
+                <Property Name="IdFileActa" Type="Edm.String" MaxLength="100"/>
+                <Property Name="FileNameActa" Type="Edm.String" MaxLength="250"/>
+                <Property Name="FileTypeActa" Type="Edm.String" MaxLength="100"/>
+                <Property Name="FileNameActaRuta" Type="Edm.String" MaxLength="136"/>
+                <Property Name="FechaInmovilizacion" Type="Edm.String" MaxLength="5000"/>
+                <Property Name="UsuarioInmovilizacion" Type="Edm.String" MaxLength="32"/>
+                <Property Name="FechaLevante" Type="Edm.String" MaxLength="5000"/>
+                <Property Name="UsuarioLevante" Type="Edm.String" MaxLength="32"/>
+                <Property Name="DAMAnticipada" Type="Edm.String" MaxLength="30"/>
+            </ComplexType>
+            <Association Name="TrackingReportSet_ToDetail">
+                <End Role="TrackingReportSet" Type="ClientPortalService.TrackingReportSet" Multiplicity="*"/>
+                <End Role="TrackingReportDetailSet" Type="ClientPortalService.TrackingReportDetailSet" Multiplicity="*"/>
+            </Association>
+            <Association Name="TrackingReportDetailSet_ToHeader">
+                <End Role="TrackingReportDetailSet" Type="ClientPortalService.TrackingReportDetailSet" Multiplicity="*"/>
+                <End Role="TrackingReportSet" Type="ClientPortalService.TrackingReportSet" Multiplicity="0..1"/>
+            </Association>
+            <Association Name="MasterSet_ToTipoTabla">
+                <End Role="MasterSet" Type="ClientPortalService.MasterSet" Multiplicity="*"/>
+                <End Role="TipoTablaSet" Type="ClientPortalService.TipoTablaSet" Multiplicity="0..1"/>
+                <ReferentialConstraint>
+                    <Principal Role="TipoTablaSet">
+                        <PropertyRef Name="TIPO_TABLA_ID"/>
+                    </Principal>
+                    <Dependent Role="MasterSet">
+                        <PropertyRef Name="TIPO_TABLA"/>
+                    </Dependent>
+                </ReferentialConstraint>
+            </Association>
+            <Annotations Target="ClientPortalService.TrackingReportSet/fechaRegistro" xmlns="http://docs.oasis-open.org/odata/ns/edm">
+                <Annotation Term="Core.Computed" Bool="true"/>
+            </Annotations>
+            <Annotations Target="ClientPortalService.TrackingReportSet/fechaActualiza" xmlns="http://docs.oasis-open.org/odata/ns/edm">
+                <Annotation Term="Core.Computed" Bool="true"/>
+            </Annotations>
+            <Annotations Target="ClientPortalService.TrackingReportSet/IdHouse" xmlns="http://docs.oasis-open.org/odata/ns/edm">
+                <Annotation Term="Common.Label" String="IdHouse: Id de la tabla CARGARAMPA.DocumentoTransporte"/>
+            </Annotations>
+            <Annotations Target="ClientPortalService.TrackingReportSet/FCRE" xmlns="http://docs.oasis-open.org/odata/ns/edm">
+                <Annotation Term="Core.Computed" Bool="true"/>
+            </Annotations>
+            <Annotations Target="ClientPortalService.TrackingReportDetailSet/fechaRegistro" xmlns="http://docs.oasis-open.org/odata/ns/edm">
+                <Annotation Term="Core.Computed" Bool="true"/>
+            </Annotations>
+            <Annotations Target="ClientPortalService.TrackingReportDetailSet/fechaActualiza" xmlns="http://docs.oasis-open.org/odata/ns/edm">
+                <Annotation Term="Core.Computed" Bool="true"/>
+            </Annotations>
+            <Annotations Target="ClientPortalService.MasterSet/fechaRegistro" xmlns="http://docs.oasis-open.org/odata/ns/edm">
+                <Annotation Term="Core.Computed" Bool="true"/>
+            </Annotations>
+            <Annotations Target="ClientPortalService.MasterSet/fechaActualiza" xmlns="http://docs.oasis-open.org/odata/ns/edm">
+                <Annotation Term="Core.Computed" Bool="true"/>
+            </Annotations>
+            <Annotations Target="ClientPortalService.TipoTablaSet/fechaRegistro" xmlns="http://docs.oasis-open.org/odata/ns/edm">
+                <Annotation Term="Core.Computed" Bool="true"/>
+            </Annotations>
+            <Annotations Target="ClientPortalService.TipoTablaSet/fechaActualiza" xmlns="http://docs.oasis-open.org/odata/ns/edm">
+                <Annotation Term="Core.Computed" Bool="true"/>
+            </Annotations>
+            <Annotations Target="ClientPortalService.DocumentSet/fechaRegistro" xmlns="http://docs.oasis-open.org/odata/ns/edm">
+                <Annotation Term="Core.Computed" Bool="true"/>
+            </Annotations>
+            <Annotations Target="ClientPortalService.DocumentSet/fechaActualiza" xmlns="http://docs.oasis-open.org/odata/ns/edm">
+                <Annotation Term="Core.Computed" Bool="true"/>
+            </Annotations>
+        </Schema>
+    </edmx:DataServices>
+</edmx:Edmx>

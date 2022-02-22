@@ -1,0 +1,36 @@
+# yaml-language-server: $schema=https://sap.github.io/ui5-tooling/schema/ui5.yaml.json
+
+specVersion: "2.5"
+metadata:
+  name: clientportal.saasa.com.pe.usermanager
+type: application
+server:
+  customMiddleware:
+    - name: fiori-tools-proxy
+      afterMiddleware: compression
+      configuration:
+        ignoreCertError: false # If set to true, certificate errors will be ignored. E.g. self-signed certificates will be accepted
+        ui5:
+          path:
+            - /resources
+            - /test-resources
+          url: https://ui5.sap.com
+          version: '' # The UI5 version, for instance, 1.78.1. Empty string means latest version
+        backend:
+          - path: /v2
+            url: https://saasa-cargarampa-qa-backend-clientportal-srv.cfapps.br10.hana.ondemand.com
+            destination: destination_cap_portal_cliente
+          - path: /scim
+            url: https://atndrk8uo.accounts.ondemand.com
+            destination: destination_ias_api
+    - name: fiori-tools-appreload
+      afterMiddleware: compression
+      configuration:
+        port: 35729
+        path: webapp
+        delay: 300
+    - name: fiori-tools-preview
+      afterMiddleware: fiori-tools-appreload
+      configuration:
+        component: clientportal.saasa.com.pe.usermanager
+        ui5Theme: sap_fiori_3

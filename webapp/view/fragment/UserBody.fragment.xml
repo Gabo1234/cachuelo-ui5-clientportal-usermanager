@@ -1,0 +1,66 @@
+<core:FragmentDefinition
+	xmlns="sap.m"
+	xmlns:core="sap.ui.core"
+	xmlns:ui="sap.ui.table"
+	xmlns:app="http://schemas.sap.com/sapui5/extension/sap.ui.core.CustomData/1"
+>
+	<ui:Table
+		id="idUserTable"
+		rows="{AppModel>/UsuariosPrincipales}"
+		selectionMode="None"
+		visibleRowCount="10"
+		enableSelectAll="false"
+		ariaLabelledBy="title"
+	>
+		<ui:extension>
+			<OverflowToolbar class="sapUiTinyMargin" style="Clear">
+				<Title id="idUserTableTitle" text="{i18n>tblUsuarioPrincipal} ({AppModel>/CantUsuariosPrincipales})"/>
+				<ToolbarSpacer/>
+				<Button
+					icon="sap-icon://person-placeholder"
+					tooltip="{i18n>btnCrearUsuario}"
+					type="Emphasized"
+					text="{i18n>btnCrearUsuario}"
+					press="onOpenCreateUserDialog"
+                    visible="{AppModel>/IsAdmin}" 
+				/>
+
+			</OverflowToolbar>
+		</ui:extension>
+		<ui:columns>	
+			<ui:Column width="20%" hAlign="Center">
+				<Label text="{i18n>lblRUC}"/>
+				<ui:template>
+					<Text
+						text="{AppModel>Ruc}"
+						wrapping="false"
+					/>
+				</ui:template>
+			</ui:Column>
+			<ui:Column width="30%" hAlign="Center" >
+				<Label text="{i18n>lblRazonSocial}"/>
+				<ui:template>
+					<Text
+						text="{AppModel>RazonSocial}"
+						wrapping="false"
+					/>
+				</ui:template>
+			</ui:Column>
+			<ui:Column width="20%" hAlign="Center">
+				<Label
+					text="{i18n>lblEstado}"
+				/>
+				<ui:template>
+					<Text
+						text="{
+							path: 'AppModel>Status',
+							formatter: '.formatter.formatStatus'
+						}"
+						wrapping="false"
+					/>
+				</ui:template>
+			</ui:Column>
+  
+		</ui:columns>
+	</ui:Table>
+</core:FragmentDefinition>

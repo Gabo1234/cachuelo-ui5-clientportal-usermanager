@@ -1,0 +1,54 @@
+<core:FragmentDefinition xmlns="sap.m"
+    xmlns:core="sap.ui.core"
+    xmlns:f="sap.ui.layout.form"
+    xmlns:fb="sap.ui.comp.filterbar"
+    xmlns:app="http://schemas.sap.com/sapui5/extension/sap.ui.core.CustomData/1">
+    <fb:FilterBar
+        id="UserFilterBar" 
+        header="Filtros" 
+        reset="onRestoreFilters" 
+        search="onSearch" 
+        useToolbar="false" 
+        showGoOnFB="true" 
+        showFilterConfiguration="false" 
+        showRestoreOnFB="true" 
+        showRestoreButton="false">
+        <fb:filterGroupItems>
+        <fb:FilterGroupItem 
+                groupName="MANGROUP" 
+                name="A" 
+                label="{i18n>lblRazonSocial}" 
+                partOfCurrentVariant="true" 
+                visibleInFilterBar="true">
+                <fb:control>
+                    <Input 
+                        app:controlType="Input"
+                        app:controlPath="RazonSocial"
+                        app:objectiveTable="UsuarioPrimario"  
+                        placeholder="{i18n>phlFilterRazonSocial}" 
+                        type="Text" showValueHelp="false" visible="true" width="100%" valueHelpOnly="false"/>
+                </fb:control>
+        </fb:FilterGroupItem>
+        <fb:FilterGroupItem 
+                groupName="MANGROUP" 
+                name="B" 
+                label="{i18n>lblEstado}" 
+                partOfCurrentVariant="true" 
+                visibleInFilterBar="true">
+                <fb:control>
+                    <ComboBox 
+                        placeholder="{i18n>phlFilterEstado}" 
+                        items="{path: 'AppModel>/Estados'}" 
+                        change="onSelectionChange"
+                        app:controlType="ComboBox"
+                        app:controlPath="Status"
+                        app:objectiveTable="UsuarioPrimario">
+                        <core:Item key="{AppModel>CONTENIDO_SECUNDARIO}" text="{AppModel>CONTENIDO}"/>
+                    </ComboBox>
+                </fb:control>
+            </fb:FilterGroupItem>
+            
+            
+        </fb:filterGroupItems>
+    </fb:FilterBar>
+</core:FragmentDefinition>

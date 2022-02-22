@@ -1,0 +1,84 @@
+<core:FragmentDefinition
+	xmlns="sap.m"
+	xmlns:core="sap.ui.core"
+    xmlns:f="sap.ui.layout.form"
+    xmlns:l="sap.ui.layout">
+	<Dialog title="{ConfigModel>/newUserDialogTitle}" resizable="true">
+	<content>
+  <f:SimpleForm 
+			editable="true"
+			layout="ResponsiveGridLayout"
+			labelSpanXL="2"
+			labelSpanL="2"
+			labelSpanM="2"
+			labelSpanS="12"
+			adjustLabelSpan="true"
+			emptySpanXL="4"
+			emptySpanL="4"
+			emptySpanM="4"
+			emptySpanS="0"
+			columnsXL="1"
+			columnsL="1"
+			columnsM="1"
+			singleContainerFullSize="false" >
+			<f:content>
+                <core:Title text="{i18n>titleDatosPersonales}" />
+				<Label text="{i18n>inpNewUserNames}" required="true"/>
+				<Input  placeholder="{i18n>phInpName}" value="{NewUserModel>/Name}" valueState="{NewUserModel>/StateName}">
+                    <layoutData>
+						<l:GridData span="XL1 L3 M3 S3" />
+					</layoutData>
+                </Input>
+                <Input  placeholder="{i18n>phInpSurname}" value="{NewUserModel>/LastName1}" valueState="{NewUserModel>/StateLastName1}">
+                <layoutData>
+						<l:GridData span="XL1 L3 M3 S3" />
+					</layoutData>
+                </Input>
+                <Input  placeholder="{i18n>phInpSecondSurname}" value="{NewUserModel>/LastName2}" valueState="{NewUserModel>/StateLastName2}">
+                <layoutData>
+						<l:GridData span="XL1 L3 M3 S3" />
+					</layoutData>
+                </Input>
+                <Label text="{i18n>inpNewUserEmail}" required="true"/>
+				<Input placeholder="{i18n>phInputEmail}" editable="{ConfigModel>/editableMail}" value="{NewUserModel>/Email}" type="Email" valueState="{NewUserModel>/StateEmail}">
+                <layoutData>
+						<l:GridData span="XL1 L9 M9 S9" />
+					</layoutData>
+                </Input>
+                <Label text="{i18n>inpNewUserPhone}" required="true"/>
+				<Input placeholder="{i18n>phInputPhone}" value="{NewUserModel>/Phone}" type="Number" valueState="{NewUserModel>/StatePhone}">
+                <layoutData>
+						<l:GridData span="XL1 L9 M9 S9" />
+					</layoutData>
+                </Input>
+                <Label text="{i18n>inpNewUserUntil}" required="true"/>
+				<DatePicker placeholder="{i18n>phdpUntilDate}" dateValue="{NewUserModel>/ExpiracyDate}" valueState="{NewUserModel>/StateExpiracyDate}">
+                <layoutData>
+						<l:GridData span="XL1 L9 M9 S9" />
+					</layoutData>
+                </DatePicker>
+
+                <core:Title text="{i18n>titleDatosEmpresa}" />
+                <Label text="{i18n>inpNewUserRUC}" required="true"/>
+				<Input placeholder="{i18n>phInputRuc}" editable="{ConfigModel>/editableRuc}" value="{NewUserModel>/Ruc}" valueState="{NewUserModel>/StateRuc}">
+                <layoutData>
+						<l:GridData span="XL1 L9 M9 S9" />
+					</layoutData>
+                </Input>
+                <Label text="{i18n>inpNewUserRazonSocial}" required="true"/>
+				<Input placeholder="{i18n>phInputRazonSocial}" editable="{ConfigModel>/editableRuc}" value="{NewUserModel>/RazonSocial}" valueState="{NewUserModel>/StateRazonSocial}">
+                <layoutData>
+						<l:GridData span="XL1 L9 M9 S9" />
+					</layoutData>
+                </Input>
+			</f:content>
+		</f:SimpleForm>
+    </content>
+    <beginButton>
+        <Button type="Emphasized" text="{ConfigModel>/newUserDialogTitle}" press="onCreateEditUser" />
+    </beginButton>
+    <endButton>
+        <Button text="{i18n>btnCancelar}" press="onCloseDialog"/>
+    </endButton>
+	</Dialog>
+</core:FragmentDefinition>

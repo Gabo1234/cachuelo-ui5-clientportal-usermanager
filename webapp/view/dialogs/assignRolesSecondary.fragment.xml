@@ -1,0 +1,95 @@
+<core:FragmentDefinition
+	xmlns="sap.m"
+	xmlns:core="sap.ui.core"
+    xmlns:f="sap.ui.layout.form"
+    xmlns:l="sap.ui.layout"
+    xmlns:ui="sap.ui.table">
+	<Dialog title="{i18n>titleAssignRoles}" resizable="true" width="100em">
+	<content>
+    <VBox >
+    <ui:Table
+		rows="{DetailModel>/Groups}"
+		selectionMode="None"
+		visibleRowCount="10"
+		enableSelectAll="false"
+		ariaLabelledBy="title"
+	>
+
+
+		<ui:extension>
+			<OverflowToolbar class="sapUiTinyMargin" style="Clear">
+				<Title text="{i18n>titleAvailableRoles}"/>
+                
+		</OverflowToolbar>
+		</ui:extension>
+		<ui:columns>	
+			<ui:Column width="30%" hAlign="Center">
+				<Label text="{i18n>lblNombreRol}"/>
+				<ui:template>
+					<Text
+						text="{DetailModel>Nombre}"
+						wrapping="false"
+					/>
+				</ui:template>
+			</ui:Column>
+            <ui:Column width="60%" hAlign="Center">
+				<Label text="{i18n>lblDescripcionRol}"/>
+				<ui:template>
+					<Text
+						text="{DetailModel>Descripcion}"
+						wrapping="false"
+					/>
+				</ui:template>
+			</ui:Column>
+			<ui:Column width="10%" hAlign="Center" >
+				<Label text="{i18n>lblAcciones}"/>
+				<ui:template>
+					<Button text="{i18n>btnAsignarRol}" press="onAssignRoleToUser"/>
+				</ui:template>
+			</ui:Column>
+		</ui:columns>
+	</ui:Table>
+    <ui:Table
+		rows="{DetailModel>/UsuarioActual/Grupos}"
+		selectionMode="None"
+		visibleRowCount="10"
+		enableSelectAll="false"
+		ariaLabelledBy="title"
+	>
+<!--<ui:noData>
+            <Text text="asdasd"/>
+        </ui:noData>-->
+		<ui:extension>
+			<OverflowToolbar class="sapUiTinyMargin" style="Clear">
+				<Title text="{i18n>titleAssignedRoles} {DetailModel>/UsuarioActual/Nombres} {DetailModel>/UsuarioActual/Apellidos}"/>
+                
+		</OverflowToolbar>
+		</ui:extension>
+		<ui:columns>	
+			<ui:Column width="80%" hAlign="Center">
+				<Label text="{i18n>lblNombreRol}"/>
+				<ui:template>
+					<Text
+						text="{DetailModel>display}"
+						wrapping="false"
+					/>
+				</ui:template>
+			</ui:Column>
+
+			<ui:Column width="20%" hAlign="Center" >
+				<Label text="{i18n>lblAcciones}"/>
+				<ui:template>
+					<Button text="{i18n>btnDesasignarRol}" press="onUnassignRoleToUser"/>
+				</ui:template>
+			</ui:Column>
+		</ui:columns>
+	</ui:Table>
+    </VBox>
+    
+    </content>
+    <beginButton>
+        <Button type="Emphasized" text="{i18n>btnCerrar}" press="onCloseDialog" />
+    </beginButton>
+
+	</Dialog>
+</core:FragmentDefinition>

@@ -1,0 +1,20 @@
+<core:FragmentDefinition
+xmlns="sap.m"
+xmlns:core="sap.ui.core"
+xmlns:ui="sap.ui.table"
+xmlns:app="http://schemas.sap.com/sapui5/extension/sap.ui.core.CustomData/1"
+xmlns:plugins="sap.ui.table.plugins">
+    <OverflowToolbar visible="{DetailModel>/IsAdmin}">
+        <ToolbarSpacer/>
+        <Button visible="{ConfigModel>/visibleFooterEditBtn}" type="Emphasized" text="{i18n>btnEditarSecundario}" press="onEditMainUser">
+            <layoutData><OverflowToolbarLayoutData priority="NeverOverflow" /></layoutData>
+        </Button>
+        <Button visible="{ConfigModel>/visibleFooterSaveBtn}" type="Emphasized" text="{i18n>btnGuardar}" press="onSaveMainUser">
+            <layoutData><OverflowToolbarLayoutData priority="NeverOverflow" /></layoutData>
+        </Button>
+        <Button visible="{ConfigModel>/visibleFooterCancelBtn}" type="Transparent" text="{i18n>btnCancelar}" press="onCancelMainUser">
+            <layoutData><OverflowToolbarLayoutData priority="NeverOverflow" /></layoutData>
+        </Button>
+
+    </OverflowToolbar>
+</core:FragmentDefinition>

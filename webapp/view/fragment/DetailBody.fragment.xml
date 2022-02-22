@@ -1,0 +1,85 @@
+<core:FragmentDefinition
+	xmlns="sap.m"
+	xmlns:core="sap.ui.core"
+	xmlns:ui="sap.ui.table"
+	xmlns:app="http://schemas.sap.com/sapui5/extension/sap.ui.core.CustomData/1"
+    xmlns:plugins="sap.ui.table.plugins"
+>
+	<ui:Table
+		id="idUserTableDetail"
+		rows="{DetailModel>/UsuariosSecundarios}"
+		selectionMode="Single"
+		visibleRowCount="10"
+		enableSelectAll="false"
+		ariaLabelledBy="title"
+	>
+        <ui:plugins>
+            <plugins:MultiSelectionPlugin selectionMode="Single" selectionChange="onSelectionSecondaryUserChange"/>
+		</ui:plugins>
+		<ui:extension>
+			<OverflowToolbar class="sapUiTinyMargin" style="Clear">
+				<Title id="idUserTableTitle" text="{i18n>tblUsuarioSecundario} ({DetailModel>/CantUsuariosSecundarios})"/>
+                <ToolbarSpacer/>
+                <SearchField placeholder="{i18n>phTableSearchField}" liveChange="onFilterSecondaryUser">
+                    <layoutData>
+                        <OverflowToolbarLayoutData maxWidth="400px" shrinkable="true" priority="NeverOverflow"/>
+                    </layoutData>
+                </SearchField>
+                <Button visible="{DetailModel>/IsAdmin}" text="{i18n>btnCrearUsuario}" type="Emphasized"  press="onCreateSecondaryUser"/>
+                <ToolbarSeparator visible="{DetailModel>/IsAdmin}"/>
+                
+                <Button visible="{DetailModel>/IsAdmin}" text="{i18n>btnEditar}" id="idBtnEditSecondaryUser" type="Transparent" enabled="false" press="onEditUser"/>
+                <Button visible="{DetailModel>/IsAdmin}" text="{i18n>btnAsignarRoles}" id="idBtnAssignRolesSecondaryUser" type="Transparent" enabled="false" press="onAssignRoles"/>
+                <Button visible="{DetailModel>/IsAdmin}" text="{i18n>btnBorrar}" id="idBtnDeleteSecondaryUser" type="Transparent" enabled="false" press="onDeleteUser"/>
+                <Button visible="{DetailModel>/IsAdmin}" text="{i18n>btnBloquearDesbloquear}" id="idBtnBlockSecondaryUser" type="Transparent" enabled="false" press="onBlockUser"/>
+                <ToolbarSeparator/>
+                <OverflowToolbarButton tooltip="Group" type="Transparent" text="Group" icon="sap-icon://excel-attachment" press="onExportExcel"/>	    
+		</OverflowToolbar>
+		</ui:extension>
+		<ui:columns>	
+			<ui:Column width="20%" hAlign="Center">
+				<Label text="{i18n>lblNombre}"/>
+				<ui:template>
+					<Text
+						text="{DetailModel>Nombres}"
+						wrapping="false"
+					/>
+				</ui:template>
+			</ui:Column>
+            <ui:Column width="20%" hAlign="Center">
+				<Label text="{i18n>lblApellido}"/>
+				<ui:template>
+					<Text
+						text="{DetailModel>Apellidos}"
+						wrapping="false"
+					/>
+				</ui:template>
+			</ui:Column>
+			<ui:Column width="30%" hAlign="Center" >
+				<Label text="{i18n>lblEmail}"/>
+				<ui:template>
+					<Text
+						text="{DetailModel>Correo}"
+						wrapping="false"
+					/>
+				</ui:template>
+			</ui:Column>
+			<ui:Column width="20%" hAlign="Center">
+				<Label
+					text="{i18n>lblEstado}"
+				/>
+				<ui:template>
+					<Text
+						text="{
+							path: 'DetailModel>Status',
+							formatter: '.formatter.formatStatus'
+						}"
+						wrapping="false"
+					/>
+				</ui:template>
+			</ui:Column>
+  
+		</ui:columns>
+	</ui:Table>
+    
+</core:FragmentDefinition>
