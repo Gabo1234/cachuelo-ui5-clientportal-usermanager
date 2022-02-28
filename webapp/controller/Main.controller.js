@@ -42,14 +42,21 @@ sap.ui.define(
           
           //Referencias principales
           that.oAppModel = this.getOwnerComponent().getModel();
-          that.sEmail = sap.ushell === undefined ? "gabriel.yepes@saasa.com.pe": sap.ushell.Container.getService("UserInfo").getUser().getEmail();
-          that.ambiente = "QAS";
-          that.appNamespace = "ClientPortal";
-          that.sIasUrl = "https://atndrk8uo.accounts.ondemand.com/";
-          that.rolAdmin = that.ambiente + "_" + (that.appNamespace).toUpperCase() + "_USERMANAGERADMIN";
+          that.sEmail = sap.ushell === undefined ? "kospina@novategica.com" : sap.ushell.Container.getService("UserInfo").getUser().getEmail();
+
+          that.ambiente = "PRD";
+          
+          that.appNamespace = (that.ambiente === "QAS") ? "CLIENTPORTAL" : "PORTAL";
+          if (that.ambiente === "QAS"){
+            that.rolBaseId = "af492883-9776-4ff4-b1bc-cd8478e5f564";
+            that.rolAdmin = that.ambiente + "_" + (that.appNamespace).toUpperCase() + "_USERMANAGERADMIN";
+          }else if (that.ambiente === "PRD"){
+            that.rolBaseId = "c261303c-477d-4cea-a5db-88824f7491cc";
+            that.rolAdmin = that.ambiente + "_" + (that.appNamespace).toUpperCase() + "_ADMIN_PORTAL";
+          }
           deployed = !(sap.ushell === undefined);
           if (that.sEmail === undefined){
-            that.sEmail = "gabriel.yepes@saasa.com.pe";
+            that.sEmail = "kospina@novategica.com";
           }
           //Creacion de modelos
           that.setModel(new JSONModel({}), "AppModel");
@@ -99,7 +106,7 @@ sap.ui.define(
             sap.ui.core.BusyIndicator.show();
             iasService.readUsers(deployed, sFilters).then((oResult) => {
                 that.sUser = oResult.Resources[0];
-                that.getModel("AppModel").getData()["UsuarioActual"] = that.formatUsersArray(oResult.Resources)[0];
+                //that.getModel("AppModel").getData()["UsuarioActual"] = that.formatUsersArray(oResult.Resources)[0];
                 
                 //Leer roles del usuario
                 sFilters = 'urn:sap:cloud:scim:schemas:extension:custom:2.0:Group:name co "' + that.rolAdmin + '"';
@@ -108,7 +115,42 @@ sap.ui.define(
                 let oAdminRol = oResult.Resources[0];
                 that.getModel("AppModel").getData()["IsAdmin"] = that.sUser.groups.map(rol =>{return rol.value;}).includes(oAdminRol.id);
                 that.getModel("AppModel").refresh(true);
+                if (that.getModel("AppModel").getData()["IsAdmin"]){
+                    sFilters = 'urn:ietf:params:scim:schemas:extension:enterprise:2.0:User:division eq "Principal"';
+                }else{
+                    sFilters = 'urn:ietf:params:scim:schemas:extension:enterprise:2.0:User:division eq "Principal" and '
+                    + 'urn:ietf:params:scim:schemas:extension:enterprise:2.0:User:costCenter eq "' 
+                    + that.sUser["urn:ietf:params:scim:schemas:extension:enterprise:2.0:User"].costCenter + '"';
+                }
 
+                
+                return iasService.readUsers(deployed, sFilters);
+            }).then((oResult) => {
+                //Aqui se deben diferenciar entre los ambientes
+                //Lectura de usuarios con esquema custom
+                let aUsers = [];
+                oResult.Resources.filter( user => {
+                    return user["urn:sap:cloud:scim:schemas:extension:custom:2.0:User"]
+                }).forEach( UserCustom =>{
+                    if (UserCustom["urn:sap:cloud:scim:schemas:extension:custom:2.0:User"]["attributes"].find(customAt =>{
+                        if (customAt.name === "customAttribute2" && customAt.value.includes(that.ambiente)){
+                            return customAt;
+                        }
+                    })){
+                        aUsers.push(UserCustom);
+                    }
+                });
+                //Fin de lectura
+                
+                if (aUsers.length !== 0){
+                    that.getModel("AppModel").getData()["UsuariosPrincipales"] = that.formatUsersArray(aUsers);
+                    that.getModel("AppModel").getData()["CantUsuariosPrincipales"] = aUsers.length;
+                }else{
+                    that.getModel("AppModel").getData()["UsuariosPrincipales"] = [];
+                    that.getModel("AppModel").getData()["CantUsuariosPrincipales"] = 0;
+                }
+
+                that.getModel("AppModel").refresh(true);
             }).finally((oFinal) => {    
                 that.onAddTableActions();
                 sap.ui.core.BusyIndicator.hide();
@@ -116,22 +158,10 @@ sap.ui.define(
                 console.log(oError);
             });
 
-            //Lectura de usuarios principales
-            sFilters =
-            'urn:ietf:params:scim:schemas:extension:enterprise:2.0:User:division eq "Principal"';
-            sap.ui.core.BusyIndicator.show();
-            iasService.readUsers(deployed, sFilters).then((oResult) => {
-                that.getModel("AppModel").getData()["UsuariosPrincipales"] = that.formatUsersArray(oResult.Resources);
-                that.getModel("AppModel").getData()["CantUsuariosPrincipales"] = oResult.totalResults;
-                that.getModel("AppModel").refresh(true);
-            }).finally((oFinal) => {
-                sap.ui.core.BusyIndicator.hide();
-            }).catch((oError) => {
-                console.log(oError);
-            });
+            
 
-            // sFilters = 'urn:sap:cloud:scim:schemas:extension:custom:2.0:Group:name co "' + that.appNamespace + '"'; //Filtro para Names
-            sFilters = 'displayName co "' + that.appNamespace + '"'; //Filtro para DisplayNames
+            sFilters = 'urn:sap:cloud:scim:schemas:extension:custom:2.0:Group:name co "' + that.appNamespace + '"'; //Filtro para Names
+            // sFilters = 'displayName co "' + that.appNamespace + '"'; //Filtro para DisplayNames
             sap.ui.core.BusyIndicator.show();
 
             iasService.readGroups(deployed, sFilters).then((oResult) => {
@@ -374,7 +404,9 @@ sap.ui.define(
         },
         onOpenCreateUserDialog: function () {
             this._openDialogDinamic("newUser");
-            this.getModel("NewUserModel").setData({});
+            this.getModel("NewUserModel").setData({
+                "ExpiracyDate": new Date(new Date().setFullYear(new Date().getFullYear() + 1))
+            });
 
             this.getModel("ConfigModel").getData()["editableRuc"] = true;
             this.getModel("ConfigModel").getData()["editableMail"] = true;
@@ -385,6 +417,7 @@ sap.ui.define(
             this.getModel("ConfigModel").refresh(true);
             this["onewUser"].setModel(this.getModel("NewUserModel")); 
             this["onewUser"].setModel(this.getModel("ConfigModel"));    
+
 
         },
 
@@ -704,9 +737,14 @@ sap.ui.define(
                     oUserObject.displayName += String(oResult.totalResults + 1).padStart(3,0);
                     return iasService.createUser(deployed, oUserObject);
                 }).then(oResult =>{
+                    //Agregar rol base a usuario creado
+                    let oGroup = that.actionUserToRoleGroup("add", oResult);
+                    oGroup.Operations[0].value[0].value = oResult.id;
+                    return iasService.updateByPatchGroup(deployed, oGroup, that.rolbaseid);
+                }).then(oResult =>{
                     MessageToast.show(this._getI18nText("msgOnSuccessCreateUser"));
                     sFilters = 'urn:ietf:params:scim:schemas:extension:enterprise:2.0:User:division eq "Principal"';
-                return iasService.readUsers(deployed, sFilters);
+                    return iasService.readUsers(deployed, sFilters);
                 }).then(oResult =>{
                     that.getModel("AppModel").getData()["UsuariosPrincipales"] = that.formatUsersArray(oResult.Resources);
                     that.getModel("AppModel").getData()["CantUsuariosPrincipales"] = oResult.totalResults;
@@ -776,7 +814,8 @@ sap.ui.define(
             "schemas": [
                 "urn:ietf:params:scim:schemas:core:2.0:User",
                 "urn:ietf:params:scim:schemas:extension:enterprise:2.0:User",
-                "urn:ietf:params:scim:schemas:extension:sap:2.0:User"
+                "urn:ietf:params:scim:schemas:extension:sap:2.0:User",
+                "urn:sap:cloud:scim:schemas:extension:custom:2.0:User"
             ],
             "userName": formatter.getUserName(oUser.Name, oUser.LastName1 + oUser.LastName2),
             "name": {
@@ -806,6 +845,12 @@ sap.ui.define(
             "urn:ietf:params:scim:schemas:extension:sap:2.0:User": {
                 "validTo": formatter.dateToZDate(oUser.ExpiracyDate),
                 "sendMail": true
+              },
+              "urn:sap:cloud:scim:schemas:extension:custom:2.0:User":{
+                "attributes": [{
+                    name: "customAttribute2",
+                    value: that.ambiente
+                }]
               }
             }
             return oUserObject;

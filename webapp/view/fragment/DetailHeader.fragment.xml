@@ -25,23 +25,23 @@
 				<Label text="{i18n>lblNombre}" />
 				<Text text="{DetailModel>/UsuarioPrincipal/Nombres}">
                     <layoutData>
-						<l:GridData span="XL1 L4 M4 S4" />
+						<l:GridData span="XL4 L4 M4 S4" />
 					</layoutData>
                 </Text>
 				<Label text="{i18n>lblApellido}" >
                     <layoutData>
-						<l:GridData span="XL1 L2 M2 S2" />
+						<l:GridData span="XL2 L2 M2 S2" />
 					</layoutData>
                 </Label>
 				<Text text="{DetailModel>/UsuarioPrincipal/Apellidos}" >
                     <layoutData>
-						<l:GridData span="XL1 L4 M4 S4" />
+						<l:GridData span="XL4 L4 M4 S4" />
 					</layoutData>
                 </Text>
 				<Label text="{i18n>lblEmail}" />
 				<Text text="{DetailModel>/UsuarioPrincipal/Correo}" >
                     <layoutData>
-						<l:GridData span="XL1 L10 M10 S10" />
+						<l:GridData span="XL10 L10 M10 S10" />
 					</layoutData>
                 </Text>
                 <Label text="{i18n>lblPhone}" />
@@ -79,23 +79,23 @@
 				<Label text="{i18n>lblNombre}" />
 				<Input value="{DetailModel>/UsuarioPrincipal/Nombres}">
                     <layoutData>
-						<l:GridData span="XL1 L4 M4 S4" />
+						<l:GridData span="XL4 L4 M4 S4" />
 					</layoutData>
                 </Input>
 				<Label text="{i18n>lblApellido}" >
                     <layoutData>
-						<l:GridData span="XL1 L2 M2 S2" />
+						<l:GridData span="XL2 L2 M2 S2" />
 					</layoutData>
                 </Label>
 				<Input value="{DetailModel>/UsuarioPrincipal/Apellidos}" >
                     <layoutData>
-						<l:GridData span="XL1 L4 M4 S4" />
+						<l:GridData span="XL4 L4 M4 S4" />
 					</layoutData>
                 </Input>
 				<Label text="{i18n>lblEmail}" />
 				<Input editable="false" value="{DetailModel>/UsuarioPrincipal/Correo}" >
                     <layoutData>
-						<l:GridData span="XL1 L10 M10 S10" />
+						<l:GridData span="XL10 L10 M10 S10" />
 					</layoutData>
                 </Input>
                 <Label text="{i18n>lblPhone}" />

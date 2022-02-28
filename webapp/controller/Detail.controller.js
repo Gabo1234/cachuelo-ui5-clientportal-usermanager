@@ -50,7 +50,17 @@ sap.ui.define(
 
             //Referencias principales
             that.oAppModel = this.getOwnerComponent().getModel();
-            that.appNamespace = "ClientPortal";
+
+            that.ambiente = "PRD";
+            
+          that.appNamespace = (that.ambiente === "QAS") ? "CLIENTPORTAL" : "PORTAL";
+          if (that.ambiente === "QAS"){
+            that.rolBaseId = "af492883-9776-4ff4-b1bc-cd8478e5f564";
+            that.rolAdmin = that.ambiente + "_" + (that.appNamespace).toUpperCase() + "_USERMANAGERADMIN";
+          }else if (that.ambiente === "PRD"){
+            that.rolBaseId = "c261303c-477d-4cea-a5db-88824f7491cc";
+            that.rolAdmin = that.ambiente + "_" + (that.appNamespace).toUpperCase() + "_ADMIN_PORTAL";
+          }
             //Creacion de modelos
             that.setModel(new JSONModel({}), "DetailModel");
             that.setModel(new JSONModel({}), "NewUserModel");
@@ -83,9 +93,28 @@ sap.ui.define(
                 + ' and ' + 'urn:ietf:params:scim:schemas:extension:enterprise:2.0:User:division eq "Secundario"';
                 return iasService.readUsers(deployed, sFilters);
             }).then(oResult =>{
-                if(oResult.Resources){
-                    that.getModel("DetailModel").getData()["UsuariosSecundarios"] = that.formatUsersArray(oResult.Resources);
-                    that.getModel("DetailModel").getData()["CantUsuariosSecundarios"] = oResult.totalResults;
+                //Aqui se deben diferenciar entre los ambientes
+                //Lectura de usuarios con esquema custom
+                let aUsers = [];
+                oResult.Resources.filter( user => {
+                    return user["urn:sap:cloud:scim:schemas:extension:custom:2.0:User"]
+                }).forEach( UserCustom =>{
+                    if (UserCustom["urn:sap:cloud:scim:schemas:extension:custom:2.0:User"]["attributes"].find(customAt =>{
+                        if (customAt.name === "customAttribute2" && customAt.value.includes(that.ambiente)){
+                            return customAt;
+                        }
+                    })){
+                        aUsers.push(UserCustom);
+                    }
+                });
+                //Fin de lectura
+                if(aUsers){
+                    that.getModel("DetailModel").getData()["UsuariosSecundarios"] = that.formatUsersArray(aUsers);
+                    that.getModel("DetailModel").getData()["CantUsuariosSecundarios"] = aUsers.length;
+                    that.getModel("DetailModel").refresh(true);
+                }else{
+                    that.getModel("DetailModel").getData()["UsuariosSecundarios"] = [];
+                    that.getModel("DetailModel").getData()["CantUsuariosSecundarios"] = 0;
                     that.getModel("DetailModel").refresh(true);
                 }
             }).finally(oFinal =>{
@@ -96,7 +125,8 @@ sap.ui.define(
 
             //Leer grupos de roles
             sap.ui.core.BusyIndicator.show();
-            sFilters = 'displayName co "' + that.appNamespace + '"'; //Filtro para DisplayNames
+            sFilters = 'urn:sap:cloud:scim:schemas:extension:custom:2.0:Group:name co "' + that.appNamespace + '"'; //Filtro para Names
+            //sFilters = 'displayName co "' + that.appNamespace + '"'; //Filtro para DisplayNames
             iasService.readGroups(deployed, sFilters).then(oResult =>{
                 that.getModel("DetailModel").getData()["Groups"] = that.formatGroupsArray(oResult.Resources);
                 that.getModel("DetailModel").refresh(true);
@@ -113,13 +143,14 @@ sap.ui.define(
         onNavBack: function () {
             var oHistory = History.getInstance();
 			var sPreviousHash = oHistory.getPreviousHash();
+            var oRouter = sap.ui.core.UIComponent.getRouterFor(that);
 
 			if (sPreviousHash !== undefined) {
 				window.history.go(-1);
-			} else {
-				var oRouter = sap.ui.core.UIComponent.getRouterFor(this);
-				oRouter.navTo("RouteMain", true);
-			}
+			} 
+				
+            oRouter.navTo("RouteMain", true);
+			
         },
         
         
@@ -208,7 +239,9 @@ sap.ui.define(
         },
         onCreateSecondaryUser: function(){
             this._openDialogDinamic("newUser");
-            this.getModel("NewUserModel").setData({});
+            this.getModel("NewUserModel").setData({
+                "ExpiracyDate": new Date(new Date().setFullYear(new Date().getFullYear() + 1))
+            });
 
             //Setear campos heredados
             this.getModel("NewUserModel").getData().Ruc = this.getModel("DetailModel").getData()["UsuarioPrincipal"].Ruc;
@@ -319,7 +352,13 @@ sap.ui.define(
                 iasService.readUsers(deployed, sFilters).then(oResult =>{
                     oUserObject.userName += String(oResult.totalResults + 1).padStart(3,0);
                     oUserObject.displayName += String(oResult.totalResults + 1).padStart(3,0);
+                    
                     return iasService.createUser(deployed, oUserObject);
+                }).then(oResult =>{
+                    //Agregar rol a usuario creado
+                    let oGroup = that.actionUserToRoleGroup("add", oResult);
+                    oGroup.Operations[0].value[0].value = oResult.id;
+                    return iasService.updateByPatchGroup(deployed, oGroup, that.rolBaseId);
                 }).then(oResult =>{
                     MessageToast.show(this._getI18nText("msgOnSuccessCreateUser"));
 
@@ -472,7 +511,8 @@ sap.ui.define(
             "schemas": [
                 "urn:ietf:params:scim:schemas:core:2.0:User",
                 "urn:ietf:params:scim:schemas:extension:enterprise:2.0:User",
-                "urn:ietf:params:scim:schemas:extension:sap:2.0:User"
+                "urn:ietf:params:scim:schemas:extension:sap:2.0:User",
+                "urn:sap:cloud:scim:schemas:extension:custom:2.0:User"
             ],
             "userName": formatter.getUserName(oUser.Name, oUser.LastName1 + oUser.LastName2),
             "name": {
@@ -502,6 +542,12 @@ sap.ui.define(
             "urn:ietf:params:scim:schemas:extension:sap:2.0:User": {
                 "validTo": formatter.dateToZDate(oUser.ExpiracyDate),
                 "sendMail": true
+              },
+              "urn:sap:cloud:scim:schemas:extension:custom:2.0:User":{
+                "attributes": [{
+                    name: "customAttribute2",
+                    value: that.ambiente
+                }]
               }
             }
             return oUserObject;

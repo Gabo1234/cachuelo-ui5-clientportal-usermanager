@@ -4,7 +4,6 @@
     xmlns:fb="sap.ui.comp.filterbar"
     xmlns:app="http://schemas.sap.com/sapui5/extension/sap.ui.core.CustomData/1">
     <fb:FilterBar
-        id="UserFilterBar" 
         header="Filtros" 
         reset="onRestoreFilters" 
         search="onSearch" 
