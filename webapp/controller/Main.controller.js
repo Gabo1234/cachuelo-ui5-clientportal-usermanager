@@ -44,7 +44,7 @@ sap.ui.define(
           that.oAppModel = this.getOwnerComponent().getModel();
           that.sEmail = sap.ushell === undefined ? "kospina@novategica.com" : sap.ushell.Container.getService("UserInfo").getUser().getEmail();
 
-          that.ambiente = "PRD";
+          that.ambiente = "QAS";
           
           that.appNamespace = (that.ambiente === "QAS") ? "CLIENTPORTAL" : "PORTAL";
           if (that.ambiente === "QAS"){

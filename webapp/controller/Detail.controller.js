@@ -51,7 +51,7 @@ sap.ui.define(
             //Referencias principales
             that.oAppModel = this.getOwnerComponent().getModel();
 
-            that.ambiente = "PRD";
+            that.ambiente = "QAS";
             
           that.appNamespace = (that.ambiente === "QAS") ? "CLIENTPORTAL" : "PORTAL";
           if (that.ambiente === "QAS"){
