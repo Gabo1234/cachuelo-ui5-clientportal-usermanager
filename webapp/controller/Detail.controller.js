@@ -51,7 +51,7 @@ sap.ui.define(
             //Referencias principales
             that.oAppModel = this.getOwnerComponent().getModel();
 
-            that.ambiente = "QAS";
+            that.ambiente = "PRD";
             
           that.appNamespace = (that.ambiente === "QAS") ? "CLIENTPORTAL" : "PORTAL";
           if (that.ambiente === "QAS"){
@@ -111,12 +111,11 @@ sap.ui.define(
                 if(aUsers){
                     that.getModel("DetailModel").getData()["UsuariosSecundarios"] = that.formatUsersArray(aUsers);
                     that.getModel("DetailModel").getData()["CantUsuariosSecundarios"] = aUsers.length;
-                    that.getModel("DetailModel").refresh(true);
                 }else{
                     that.getModel("DetailModel").getData()["UsuariosSecundarios"] = [];
                     that.getModel("DetailModel").getData()["CantUsuariosSecundarios"] = 0;
-                    that.getModel("DetailModel").refresh(true);
                 }
+                that.getModel("DetailModel").refresh(true);
             }).finally(oFinal =>{
                 sap.ui.core.BusyIndicator.hide();
             }).catch(oError =>{
@@ -305,9 +304,29 @@ sap.ui.define(
                             + ' and ' + 'urn:ietf:params:scim:schemas:extension:enterprise:2.0:User:division eq "Secundario"';
                             return iasService.readUsers(deployed, sFilters); 
                         }).then(oResult =>{
-                            that.getModel("DetailModel").getData()["UsuariosSecundarios"] = that.formatUsersArray(oResult.Resources);
-                            that.getModel("DetailModel").getData()["CantUsuariosSecundarios"] = oResult.totalResults;
-                            that.getModel("DetailModel").refresh(true);
+                            //Aqui se deben diferenciar entre los ambientes
+                //Lectura de usuarios con esquema custom
+                let aUsers = [];
+                oResult.Resources.filter( user => {
+                    return user["urn:sap:cloud:scim:schemas:extension:custom:2.0:User"]
+                }).forEach( UserCustom =>{
+                    if (UserCustom["urn:sap:cloud:scim:schemas:extension:custom:2.0:User"]["attributes"].find(customAt =>{
+                        if (customAt.name === "customAttribute2" && customAt.value.includes(that.ambiente)){
+                            return customAt;
+                        }
+                    })){
+                        aUsers.push(UserCustom);
+                    }
+                });
+                //Fin de lectura
+                if(aUsers){
+                    that.getModel("DetailModel").getData()["UsuariosSecundarios"] = that.formatUsersArray(aUsers);
+                    that.getModel("DetailModel").getData()["CantUsuariosSecundarios"] = aUsers.length;
+                }else{
+                    that.getModel("DetailModel").getData()["UsuariosSecundarios"] = [];
+                    that.getModel("DetailModel").getData()["CantUsuariosSecundarios"] = 0;
+                }
+                that.getModel("DetailModel").refresh(true);
                         }).finally(oFinal =>{
                             sap.ui.core.BusyIndicator.hide();
                         }).catch(oError =>{
@@ -366,8 +385,28 @@ sap.ui.define(
                 + ' and ' + 'urn:ietf:params:scim:schemas:extension:enterprise:2.0:User:division eq "Secundario"';
                 return iasService.readUsers(deployed, sFilters);
                 }).then(oResult =>{
-                    that.getModel("DetailModel").getData()["UsuariosSecundarios"] = that.formatUsersArray(oResult.Resources);
-                that.getModel("DetailModel").getData()["CantUsuariosSecundarios"] = oResult.totalResults;
+                    //Aqui se deben diferenciar entre los ambientes
+                //Lectura de usuarios con esquema custom
+                let aUsers = [];
+                oResult.Resources.filter( user => {
+                    return user["urn:sap:cloud:scim:schemas:extension:custom:2.0:User"]
+                }).forEach( UserCustom =>{
+                    if (UserCustom["urn:sap:cloud:scim:schemas:extension:custom:2.0:User"]["attributes"].find(customAt =>{
+                        if (customAt.name === "customAttribute2" && customAt.value.includes(that.ambiente)){
+                            return customAt;
+                        }
+                    })){
+                        aUsers.push(UserCustom);
+                    }
+                });
+                //Fin de lectura
+                if(aUsers){
+                    that.getModel("DetailModel").getData()["UsuariosSecundarios"] = that.formatUsersArray(aUsers);
+                    that.getModel("DetailModel").getData()["CantUsuariosSecundarios"] = aUsers.length;
+                }else{
+                    that.getModel("DetailModel").getData()["UsuariosSecundarios"] = [];
+                    that.getModel("DetailModel").getData()["CantUsuariosSecundarios"] = 0;
+                }
                 that.getModel("DetailModel").refresh(true);
                 }).catch(oError =>{
                     MessageBox.error(oError);
@@ -414,8 +453,28 @@ sap.ui.define(
                 + ' and ' + 'urn:ietf:params:scim:schemas:extension:enterprise:2.0:User:division eq "Secundario"';
                 return iasService.readUsers(deployed, sFilters);
                 }).then(oResult =>{
-                    that.getModel("DetailModel").getData()["UsuariosSecundarios"] = that.formatUsersArray(oResult.Resources);
-                that.getModel("DetailModel").getData()["CantUsuariosSecundarios"] = oResult.totalResults;
+                    //Aqui se deben diferenciar entre los ambientes
+                //Lectura de usuarios con esquema custom
+                let aUsers = [];
+                oResult.Resources.filter( user => {
+                    return user["urn:sap:cloud:scim:schemas:extension:custom:2.0:User"]
+                }).forEach( UserCustom =>{
+                    if (UserCustom["urn:sap:cloud:scim:schemas:extension:custom:2.0:User"]["attributes"].find(customAt =>{
+                        if (customAt.name === "customAttribute2" && customAt.value.includes(that.ambiente)){
+                            return customAt;
+                        }
+                    })){
+                        aUsers.push(UserCustom);
+                    }
+                });
+                //Fin de lectura
+                if(aUsers){
+                    that.getModel("DetailModel").getData()["UsuariosSecundarios"] = that.formatUsersArray(aUsers);
+                    that.getModel("DetailModel").getData()["CantUsuariosSecundarios"] = aUsers.length;
+                }else{
+                    that.getModel("DetailModel").getData()["UsuariosSecundarios"] = [];
+                    that.getModel("DetailModel").getData()["CantUsuariosSecundarios"] = 0;
+                }
                 that.getModel("DetailModel").refresh(true);
                 }).catch(oError =>{
                     MessageBox.error(oError);
@@ -670,9 +729,29 @@ sap.ui.define(
                             + ' and ' + 'urn:ietf:params:scim:schemas:extension:enterprise:2.0:User:division eq "Secundario"';
                             return iasService.readUsers(deployed, sFilters); 
                         }).then(oResult =>{
-                            that.getModel("DetailModel").getData()["UsuariosSecundarios"] = that.formatUsersArray(oResult.Resources);
-                            that.getModel("DetailModel").getData()["CantUsuariosSecundarios"] = oResult.totalResults;
-                            that.getModel("DetailModel").refresh(true);
+                            //Aqui se deben diferenciar entre los ambientes
+                //Lectura de usuarios con esquema custom
+                let aUsers = [];
+                oResult.Resources.filter( user => {
+                    return user["urn:sap:cloud:scim:schemas:extension:custom:2.0:User"]
+                }).forEach( UserCustom =>{
+                    if (UserCustom["urn:sap:cloud:scim:schemas:extension:custom:2.0:User"]["attributes"].find(customAt =>{
+                        if (customAt.name === "customAttribute2" && customAt.value.includes(that.ambiente)){
+                            return customAt;
+                        }
+                    })){
+                        aUsers.push(UserCustom);
+                    }
+                });
+                //Fin de lectura
+                if(aUsers){
+                    that.getModel("DetailModel").getData()["UsuariosSecundarios"] = that.formatUsersArray(aUsers);
+                    that.getModel("DetailModel").getData()["CantUsuariosSecundarios"] = aUsers.length;
+                }else{
+                    that.getModel("DetailModel").getData()["UsuariosSecundarios"] = [];
+                    that.getModel("DetailModel").getData()["CantUsuariosSecundarios"] = 0;
+                }
+                that.getModel("DetailModel").refresh(true);
                         }).finally(oFinal =>{
                             sap.ui.core.BusyIndicator.hide();
                         }).catch(oError =>{
