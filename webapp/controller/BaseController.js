@@ -142,6 +142,7 @@ sap.ui.define([
                         oFormattedUser["UserId"] = oUser["id"];
                         oFormattedUser["Nombres"] = oUser["name"].givenName;
                         oFormattedUser["Apellidos"] = oUser["name"].familyName;
+                        oFormattedUser["Dni"] = oUser["urn:ietf:params:scim:schemas:extension:enterprise:2.0:User"].employeeNumber;
                         oFormattedUser["Correo"] = (oUser["emails"]===undefined)?null:oUser["emails"][0].value;
                         oFormattedUser["Telefono"] = (oUser["phoneNumbers"]===undefined)?null:oUser["phoneNumbers"][0].value; //Confirmar
                         oFormattedUser["Vigencia"] = (oUser["urn:ietf:params:scim:schemas:extension:sap:2.0:User"]===undefined)?null:Formatter.formatZDateToDate(oUser["urn:ietf:params:scim:schemas:extension:sap:2.0:User"]["validTo"]); //Formatear

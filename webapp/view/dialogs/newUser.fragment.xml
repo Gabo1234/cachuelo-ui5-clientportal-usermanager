@@ -39,6 +39,12 @@
 						<l:GridData span="XL1 L3 M3 S3" />
 					</layoutData>
                 </Input>
+                <Label text="{i18n>inpDocumentoIdentidad}" required="true"/>
+				<Input placeholder="{i18n>phDocumentoIdentidad}" value="{NewUserModel>/Dni}" valueState="{NewUserModel>/StateEmail}">
+                <layoutData>
+						<l:GridData span="XL1 L9 M9 S9" />
+					</layoutData>
+                </Input>
                 <Label text="{i18n>inpNewUserEmail}" required="true"/>
 				<Input placeholder="{i18n>phInputEmail}" editable="{ConfigModel>/editableMail}" value="{NewUserModel>/Email}" type="Email" valueState="{NewUserModel>/StateEmail}">
                 <layoutData>

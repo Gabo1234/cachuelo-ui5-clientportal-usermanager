@@ -394,6 +394,7 @@ sap.ui.define(
               "LastName1",
               "LastName2",
               "Email",
+              "Dni",
               "Phone",
               "ExpiracyDate",
               "RazonSocial",
@@ -450,6 +451,31 @@ sap.ui.define(
               this.getModel("NewUserModel").getData()["State" + propiedad] =
                 "None";
             }
+
+            if (
+                propiedad === "Dni" &&
+                (oUsuario[propiedad] === undefined || oUsuario[propiedad] === "")
+              ) {
+                this.getModel("NewUserModel").getData()["State" + propiedad] =
+                  "Error";
+                bNoValidUser = true;
+                iMessage = 6;
+              } else if (
+                propiedad === "Dni" &&
+                oUsuario[propiedad] !== undefined
+              ) {
+                if (
+                    oUsuario[propiedad].length != 8
+                ) {
+                  this.getModel("NewUserModel").getData()["State" + propiedad] =
+                    "Error";
+                  bNoValidUser = true;
+                  iMessage = 6;
+                } else {
+                  this.getModel("NewUserModel").getData()["State" + propiedad] =
+                    "None";
+                }
+              }
 
             if (
               propiedad === "RazonSocial" &&
@@ -685,6 +711,9 @@ sap.ui.define(
                     case 5:
                         MessageBox.error(that._getI18nText("msgBoxErrOnCreateUser5"));
                         break; 
+                    case 6:
+                        MessageBox.error(that._getI18nText("msgBoxErrOnCreateUser6"));
+                        break; 
                 }
             }else{
                 let oUserObject = that.getUserObject(oUserForm, "Principal"), sFilters;
@@ -799,9 +828,10 @@ sap.ui.define(
               }
             ],
             "urn:ietf:params:scim:schemas:extension:enterprise:2.0:User": {
-              "division": sUserType,
-              "costCenter": oUser.Ruc,
-              "organization": oUser.RazonSocial
+                "employeeNumber": oUser.Dni, 
+                "division": sUserType,
+                "costCenter": oUser.Ruc,
+                "organization": oUser.RazonSocial
             },
             "urn:ietf:params:scim:schemas:extension:sap:2.0:User": {
                 "validTo": formatter.dateToZDate(oUser.ExpiracyDate),

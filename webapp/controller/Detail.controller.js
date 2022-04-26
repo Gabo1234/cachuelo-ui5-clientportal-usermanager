@@ -235,6 +235,7 @@ sap.ui.define(
             this.getModel("NewUserModel").getData().Name = that.getModel("DetailModel").getData()["UsuarioActual"].Nombres;
             this.getModel("NewUserModel").getData().LastName1 = that.getModel("DetailModel").getData()["UsuarioActual"].Apellidos.split(" ")[0];
             this.getModel("NewUserModel").getData().LastName2 = that.getModel("DetailModel").getData()["UsuarioActual"].Apellidos.split(" ")[1];
+            this.getModel("NewUserModel").getData().Dni = that.getModel("DetailModel").getData()["UsuarioActual"].Dni;
             this.getModel("NewUserModel").getData().Email = that.getModel("DetailModel").getData()["UsuarioActual"].Correo;
             this.getModel("NewUserModel").getData().Phone = that.getModel("DetailModel").getData()["UsuarioActual"].Telefono;
             this.getModel("NewUserModel").getData().ExpiracyDate = that.getModel("DetailModel").getData()["UsuarioActual"].Vigencia;
@@ -310,7 +311,10 @@ sap.ui.define(
                         break;
                     case 4:
                         MessageBox.error(that._getI18nText("msgBoxErrOnCreateUser4"));
-                        break;   
+                        break;
+                    case 6:
+                        MessageBox.error(that._getI18nText("msgBoxErrOnCreateUser6"));
+                        break; 
                 }
             }else{
                 let oUserObject = that.getUserObject(oUserForm, "Secundario"), sFilters;
@@ -356,7 +360,10 @@ sap.ui.define(
                         break;
                     case 4:
                         MessageBox.error(that._getI18nText("msgBoxErrOnCreateUser4"));
-                        break;   
+                        break;
+                    case 6:
+                        MessageBox.error(that._getI18nText("msgBoxErrOnCreateUser6"));
+                        break; 
                 }
             }else{
                 let oUserObject = that.getUserObject(oUserEdited, "Secundario"), sFilters;
@@ -389,7 +396,7 @@ sap.ui.define(
         
         onValidarUserIas: function(oUsuario){
             
-            let aPropiedades = ["Name", "LastName1", "LastName2", "Email", "Phone", "ExpiracyDate"],
+            let aPropiedades = ["Name", "LastName1", "LastName2", "Dni", "Email", "Phone", "ExpiracyDate"],
                 bNoValidUser = false, iMessage=0;
 
             aPropiedades.forEach(propiedad =>{ 
@@ -416,6 +423,21 @@ sap.ui.define(
                 }else if(propiedad === "LastName2" && oUsuario[propiedad] !== undefined) {
                     this.getModel("NewUserModel").getData()["State" + propiedad] = "None";
                 }
+
+                if(propiedad === "Dni" && (oUsuario[propiedad] === undefined || oUsuario[propiedad] === "")) {
+                    this.getModel("NewUserModel").getData()["State" + propiedad] = "Error";
+                    bNoValidUser = true;
+                    iMessage = 6;
+                }else if(propiedad === "Dni" && oUsuario[propiedad] !== undefined) {
+                    if(oUsuario[propiedad].length != 8){
+                        this.getModel("NewUserModel").getData()["State" + propiedad] = "Error";
+                        bNoValidUser = true;
+                        iMessage = 6;
+                    }else{
+                        this.getModel("NewUserModel").getData()["State" + propiedad] = "None";
+                    }
+                }
+
 
                 if(propiedad === "Email" && (oUsuario[propiedad] === undefined || oUsuario[propiedad] === "")) {
                     this.getModel("NewUserModel").getData()["State" + propiedad] = "Error";
@@ -495,7 +517,8 @@ sap.ui.define(
               }
             ],
             "urn:ietf:params:scim:schemas:extension:enterprise:2.0:User": {
-              "division": sUserType,
+                "employeeNumber": oUser.Dni,
+                "division": sUserType,
               "costCenter": oUser.Ruc,
               "organization": oUser.RazonSocial
             },
