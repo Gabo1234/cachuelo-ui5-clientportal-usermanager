@@ -2,7 +2,9 @@
 	xmlns="sap.m"
 	xmlns:core="sap.ui.core"
     xmlns:f="sap.ui.layout.form"
-    xmlns:l="sap.ui.layout">
+    xmlns:l="sap.ui.layout"
+    xmlns:u="sap.ui.unified"
+>
 	<Dialog title="{ConfigModel>/newUserDialogTitle}" resizable="true">
 	<content>
   <f:SimpleForm 
@@ -53,10 +55,49 @@
                 </Input>
                 <Label text="{i18n>inpNewUserUntil}" required="true"/>
 				<DatePicker placeholder="{i18n>phdpUntilDate}" dateValue="{NewUserModel>/ExpiracyDate}" valueState="{NewUserModel>/StateExpiracyDate}">
-                <layoutData>
+                    <layoutData>
 						<l:GridData span="XL1 L9 M9 S9" />
 					</layoutData>
                 </DatePicker>
+                <!--<Label text="{i18n>fileUploaderDNIFront}" />
+                <u:FileUploader placeholder="{i18n>phFileUploaderDNIFront}" 
+                    fileType="png,jpg"
+                    multiple="false" 
+                    maximumFileSize="5"
+                    change="handleUploadDNIFront"
+                    typeMissmatch="handleTypeMissmatch">    
+                </u:FileUploader>
+                <Label text="{i18n>fileUploaderDNIBack}" />
+                <u:FileUploader placeholder="{i18n>phFileUploaderDNIBack}" 
+                    fileType="png,jpg"
+                    maximumFileSize="5"
+                    multiple="false" 
+                    change="handleUploadDNIBack"
+                    typeMissmatch="handleTypeMissmatch">
+                </u:FileUploader> -->
+
+
+
+                <core:Title text="{i18n>titlePerfilesUsuario}" />
+                <Label text="{i18n>chkAgenteAduanas}" />
+				<CheckBox class="sapUiSmallMarginBegin" selected="{NewUserModel>/RolAgenteAduana}" valueState="{NewUserModel>/StateRolAgenteAduana}">
+                    <layoutData>
+						<l:GridData span="XL1 L6 M6 S6" />
+					</layoutData>
+                </CheckBox>
+                <Label text="{i18n>chkAgenteCarga}" />
+                <CheckBox class="sapUiSmallMarginBegin" selected="{NewUserModel>/RolAgenteCarga}" valueState="{NewUserModel>/StateRolAgenteCarga}">
+                    <layoutData>
+						<l:GridData span="XL1 L6 M6 S6" />
+					</layoutData>
+                </CheckBox>
+                <Label text="{i18n>chkCliente}" />
+				<CheckBox class="sapUiSmallMarginBegin" selected="{NewUserModel>/RolCliente}" valueState="{NewUserModel>/StateRolCliente}">
+                    <layoutData>
+						<l:GridData span="XL1 L6 M6 S6" />
+					</layoutData>
+                </CheckBox>
+
 
                 <core:Title text="{i18n>titleDatosEmpresa}" />
                 <Label text="{i18n>inpNewUserRUC}" required="true"/>

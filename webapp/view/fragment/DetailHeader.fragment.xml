@@ -48,6 +48,15 @@
 				<Text text="{DetailModel>/UsuarioPrincipal/Telefono}" />
                 <Label text="{i18n>lblUntilDate}" />
 				<Text text="{path:'DetailModel>/UsuarioPrincipal/Vigencia', formatter: '.formatter.formatDateToString'}" />
+                <Label text="{i18n>chkAgenteAduanas}" />
+				<CheckBox class="sapUiSmallMarginBegin" editable="false" selected="{DetailModel>/UsuarioPrincipal/RolAgenteAduana}" />
+                <Label text="{i18n>chkAgenteCarga}" />
+                <CheckBox class="sapUiSmallMarginBegin" editable="false" selected="{DetailModel>/UsuarioPrincipal/RolAgenteCarga}"/>
+                <Label text="{i18n>chkCliente}" />
+				<CheckBox class="sapUiSmallMarginBegin" editable="false" selected="{DetailModel>/UsuarioPrincipal/RolCliente}" />
+                
+
+
 
 				<core:Title text="{i18n>formTitleOrg}" />
 				<Label text="{i18n>lblRUC}" />
@@ -102,6 +111,12 @@
 				<Input value="{DetailModel>/UsuarioPrincipal/Telefono}" />
                 <Label text="{i18n>lblUntilDate}" />
 				<DatePicker dateValue="{path:'DetailModel>/UsuarioPrincipal/Vigencia'}" />
+                <Label text="{i18n>chkAgenteAduanas}" />
+				<CheckBox class="sapUiSmallMarginBegin"  selected="{DetailModel>/UsuarioPrincipal/RolAgenteAduana}" />
+                <Label text="{i18n>chkAgenteCarga}" />
+                <CheckBox class="sapUiSmallMarginBegin" selected="{DetailModel>/UsuarioPrincipal/RolAgenteCarga}"/>
+                <Label text="{i18n>chkCliente}" />
+				<CheckBox class="sapUiSmallMarginBegin"  selected="{DetailModel>/UsuarioPrincipal/RolCliente}" />
 
 				<core:Title text="{i18n>formTitleOrg}" />
 				<Label text="{i18n>lblRUC}" />

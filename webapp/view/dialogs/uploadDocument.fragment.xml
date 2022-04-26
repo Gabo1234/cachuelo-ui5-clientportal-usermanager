@@ -1,0 +1,55 @@
+<core:FragmentDefinition
+	xmlns="sap.m"
+	xmlns:core="sap.ui.core"
+    xmlns:f="sap.ui.layout.form"
+    xmlns:l="sap.ui.layout"
+    xmlns:u="sap.ui.unified"
+>
+	<Dialog title="{UploadModel>/email}" resizable="true">
+	<content>
+  <f:SimpleForm 
+			editable="true"
+			layout="ResponsiveGridLayout"
+			labelSpanXL="2"
+			labelSpanL="2"
+			labelSpanM="2"
+			labelSpanS="12"
+			adjustLabelSpan="true"
+			emptySpanXL="4"
+			emptySpanL="4"
+			emptySpanM="4"
+			emptySpanS="0"
+			columnsXL="1"
+			columnsL="1"
+			columnsM="1"
+			singleContainerFullSize="false" >
+			<f:content>
+                <core:Title text="{i18n>titleDocument}" />
+                <Label text="{i18n>fileUploaderDNIFront}" />
+                <u:FileUploader placeholder="{i18n>phFileUploaderDNIFront}" 
+                    fileType="png,jpg"
+                    multiple="false" 
+                    maximumFileSize="5"
+                    change="handleUploadDNIFront"
+                    typeMissmatch="handleTypeMissmatch">    
+                </u:FileUploader>
+                <Label text="{i18n>fileUploaderDNIBack}" />
+                <u:FileUploader placeholder="{i18n>phFileUploaderDNIBack}" 
+                    fileType="png,jpg"
+                    maximumFileSize="5"
+                    multiple="false" 
+                    change="handleUploadDNIBack"
+                    typeMissmatch="handleTypeMissmatch">
+                </u:FileUploader>
+
+			</f:content>
+		</f:SimpleForm>
+    </content>
+    <beginButton>
+        <Button type="Emphasized" text="{i18n>btnSubirDocumento}" press="onUploadDocument" />
+    </beginButton>
+    <endButton>
+        <Button text="{i18n>btnCancelar}" press="onCloseDialog"/>
+    </endButton>
+	</Dialog>
+</core:FragmentDefinition>

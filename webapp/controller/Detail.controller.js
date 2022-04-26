@@ -51,7 +51,7 @@ sap.ui.define(
             //Referencias principales
             that.oAppModel = this.getOwnerComponent().getModel();
 
-            that.ambiente = "PRD";
+            that.ambiente = "QAS";
             
           that.appNamespace = (that.ambiente === "QAS") ? "CLIENTPORTAL" : "PORTAL";
           if (that.ambiente === "QAS"){
@@ -96,19 +96,21 @@ sap.ui.define(
                 //Aqui se deben diferenciar entre los ambientes
                 //Lectura de usuarios con esquema custom
                 let aUsers = [];
-                oResult.Resources.filter( user => {
-                    return user["urn:sap:cloud:scim:schemas:extension:custom:2.0:User"]
-                }).forEach( UserCustom =>{
-                    if (UserCustom["urn:sap:cloud:scim:schemas:extension:custom:2.0:User"]["attributes"].find(customAt =>{
-                        if (customAt.name === "customAttribute2" && customAt.value.includes(that.ambiente)){
-                            return customAt;
+                if (oResult.Resources !== undefined){
+                    oResult.Resources.filter( user => {
+                        return user["urn:sap:cloud:scim:schemas:extension:custom:2.0:User"]
+                    }).forEach( UserCustom =>{
+                        if (UserCustom["urn:sap:cloud:scim:schemas:extension:custom:2.0:User"]["attributes"].find(customAt =>{
+                            if (customAt.name === "customAttribute2" && customAt.value.includes(that.ambiente)){
+                                return customAt;
+                            }
+                        })){
+                            aUsers.push(UserCustom);
                         }
-                    })){
-                        aUsers.push(UserCustom);
-                    }
-                });
+                    });
+                }
                 //Fin de lectura
-                if(aUsers){
+                if(aUsers.length > 0){
                     that.getModel("DetailModel").getData()["UsuariosSecundarios"] = that.formatUsersArray(aUsers);
                     that.getModel("DetailModel").getData()["CantUsuariosSecundarios"] = aUsers.length;
                 }else{
@@ -124,7 +126,7 @@ sap.ui.define(
 
             //Leer grupos de roles
             sap.ui.core.BusyIndicator.show();
-            sFilters = 'urn:sap:cloud:scim:schemas:extension:custom:2.0:Group:name co "' + that.appNamespace + '"'; //Filtro para Names
+            sFilters = 'urn:sap:cloud:scim:schemas:extension:custom:2.0:Group:name co "' + that.ambiente + "_" + that.appNamespace + '"'; //Filtro para Names
             //sFilters = 'displayName co "' + that.appNamespace + '"'; //Filtro para DisplayNames
             iasService.readGroups(deployed, sFilters).then(oResult =>{
                 that.getModel("DetailModel").getData()["Groups"] = that.formatGroupsArray(oResult.Resources);
@@ -176,7 +178,8 @@ sap.ui.define(
                 this.byId("idBtnEditSecondaryUser").setEnabled(false);
                 this.byId("idBtnAssignRolesSecondaryUser").setEnabled(false); 
                 this.byId("idBtnBlockSecondaryUser").setEnabled(false); 
-                 
+                this.byId("idBtnUploadDocument").setEnabled(false); 
+
                 
                 that.getModel("DetailModel").getData()["UsuarioActual"] = null;
                 that.getModel("DetailModel").refresh(true);                
@@ -185,6 +188,8 @@ sap.ui.define(
                 this.byId("idBtnEditSecondaryUser").setEnabled(true); 
                 this.byId("idBtnAssignRolesSecondaryUser").setEnabled(true);  
                 this.byId("idBtnBlockSecondaryUser").setEnabled(true); 
+                this.byId("idBtnUploadDocument").setEnabled(true); 
+
     
                 
                 that.getModel("DetailModel").getData()["UsuarioActual"] = this.byId("idUserTableDetail")._getContexts()[oEvent.getSource().getSelectedIndex()].getObject();
@@ -305,28 +310,30 @@ sap.ui.define(
                             return iasService.readUsers(deployed, sFilters); 
                         }).then(oResult =>{
                             //Aqui se deben diferenciar entre los ambientes
-                //Lectura de usuarios con esquema custom
-                let aUsers = [];
-                oResult.Resources.filter( user => {
-                    return user["urn:sap:cloud:scim:schemas:extension:custom:2.0:User"]
-                }).forEach( UserCustom =>{
-                    if (UserCustom["urn:sap:cloud:scim:schemas:extension:custom:2.0:User"]["attributes"].find(customAt =>{
-                        if (customAt.name === "customAttribute2" && customAt.value.includes(that.ambiente)){
-                            return customAt;
-                        }
-                    })){
-                        aUsers.push(UserCustom);
-                    }
-                });
-                //Fin de lectura
-                if(aUsers){
-                    that.getModel("DetailModel").getData()["UsuariosSecundarios"] = that.formatUsersArray(aUsers);
-                    that.getModel("DetailModel").getData()["CantUsuariosSecundarios"] = aUsers.length;
-                }else{
-                    that.getModel("DetailModel").getData()["UsuariosSecundarios"] = [];
-                    that.getModel("DetailModel").getData()["CantUsuariosSecundarios"] = 0;
-                }
-                that.getModel("DetailModel").refresh(true);
+                            //Lectura de usuarios con esquema custom
+                            let aUsers = [];
+                            if (oResult.Resources !== undefined){
+                                oResult.Resources.filter( user => {
+                                    return user["urn:sap:cloud:scim:schemas:extension:custom:2.0:User"]
+                                }).forEach( UserCustom =>{
+                                    if (UserCustom["urn:sap:cloud:scim:schemas:extension:custom:2.0:User"]["attributes"].find(customAt =>{
+                                        if (customAt.name === "customAttribute2" && customAt.value.includes(that.ambiente)){
+                                            return customAt;
+                                        }
+                                    })){
+                                        aUsers.push(UserCustom);
+                                    }
+                                });
+                            }
+                            //Fin de lectura
+                            if(aUsers.length > 0){
+                                that.getModel("DetailModel").getData()["UsuariosSecundarios"] = that.formatUsersArray(aUsers);
+                                that.getModel("DetailModel").getData()["CantUsuariosSecundarios"] = aUsers.length;
+                            }else{
+                                that.getModel("DetailModel").getData()["UsuariosSecundarios"] = [];
+                                that.getModel("DetailModel").getData()["CantUsuariosSecundarios"] = 0;
+                            }
+                            that.getModel("DetailModel").refresh(true);
                         }).finally(oFinal =>{
                             sap.ui.core.BusyIndicator.hide();
                         }).catch(oError =>{
@@ -377,6 +384,7 @@ sap.ui.define(
                     //Agregar rol a usuario creado
                     let oGroup = that.actionUserToRoleGroup("add", oResult);
                     oGroup.Operations[0].value[0].value = oResult.id;
+
                     return iasService.updateByPatchGroup(deployed, oGroup, that.rolBaseId);
                 }).then(oResult =>{
                     MessageToast.show(this._getI18nText("msgOnSuccessCreateUser"));
@@ -386,28 +394,30 @@ sap.ui.define(
                 return iasService.readUsers(deployed, sFilters);
                 }).then(oResult =>{
                     //Aqui se deben diferenciar entre los ambientes
-                //Lectura de usuarios con esquema custom
-                let aUsers = [];
-                oResult.Resources.filter( user => {
-                    return user["urn:sap:cloud:scim:schemas:extension:custom:2.0:User"]
-                }).forEach( UserCustom =>{
-                    if (UserCustom["urn:sap:cloud:scim:schemas:extension:custom:2.0:User"]["attributes"].find(customAt =>{
-                        if (customAt.name === "customAttribute2" && customAt.value.includes(that.ambiente)){
-                            return customAt;
-                        }
-                    })){
-                        aUsers.push(UserCustom);
+                    //Lectura de usuarios con esquema custom
+                    let aUsers = [];
+                    if (oResult.Resources !== undefined){
+                        oResult.Resources.filter( user => {
+                            return user["urn:sap:cloud:scim:schemas:extension:custom:2.0:User"]
+                        }).forEach( UserCustom =>{
+                            if (UserCustom["urn:sap:cloud:scim:schemas:extension:custom:2.0:User"]["attributes"].find(customAt =>{
+                                if (customAt.name === "customAttribute2" && customAt.value.includes(that.ambiente)){
+                                    return customAt;
+                                }
+                            })){
+                                aUsers.push(UserCustom);
+                            }
+                        });
                     }
-                });
-                //Fin de lectura
-                if(aUsers){
-                    that.getModel("DetailModel").getData()["UsuariosSecundarios"] = that.formatUsersArray(aUsers);
-                    that.getModel("DetailModel").getData()["CantUsuariosSecundarios"] = aUsers.length;
-                }else{
-                    that.getModel("DetailModel").getData()["UsuariosSecundarios"] = [];
-                    that.getModel("DetailModel").getData()["CantUsuariosSecundarios"] = 0;
-                }
-                that.getModel("DetailModel").refresh(true);
+                    //Fin de lectura
+                    if(aUsers.length > 0){
+                        that.getModel("DetailModel").getData()["UsuariosSecundarios"] = that.formatUsersArray(aUsers);
+                        that.getModel("DetailModel").getData()["CantUsuariosSecundarios"] = aUsers.length;
+                    }else{
+                        that.getModel("DetailModel").getData()["UsuariosSecundarios"] = [];
+                        that.getModel("DetailModel").getData()["CantUsuariosSecundarios"] = 0;
+                    }
+                    that.getModel("DetailModel").refresh(true);
                 }).catch(oError =>{
                     MessageBox.error(oError);
                 }).finally(oFinal =>{
@@ -454,28 +464,30 @@ sap.ui.define(
                 return iasService.readUsers(deployed, sFilters);
                 }).then(oResult =>{
                     //Aqui se deben diferenciar entre los ambientes
-                //Lectura de usuarios con esquema custom
-                let aUsers = [];
-                oResult.Resources.filter( user => {
-                    return user["urn:sap:cloud:scim:schemas:extension:custom:2.0:User"]
-                }).forEach( UserCustom =>{
-                    if (UserCustom["urn:sap:cloud:scim:schemas:extension:custom:2.0:User"]["attributes"].find(customAt =>{
-                        if (customAt.name === "customAttribute2" && customAt.value.includes(that.ambiente)){
-                            return customAt;
-                        }
-                    })){
-                        aUsers.push(UserCustom);
+                    //Lectura de usuarios con esquema custom
+                    let aUsers = [];
+                    if (oResult.Resources !== undefined){
+                        oResult.Resources.filter( user => {
+                            return user["urn:sap:cloud:scim:schemas:extension:custom:2.0:User"]
+                        }).forEach( UserCustom =>{
+                            if (UserCustom["urn:sap:cloud:scim:schemas:extension:custom:2.0:User"]["attributes"].find(customAt =>{
+                                if (customAt.name === "customAttribute2" && customAt.value.includes(that.ambiente)){
+                                    return customAt;
+                                }
+                            })){
+                                aUsers.push(UserCustom);
+                            }
+                        });
                     }
-                });
-                //Fin de lectura
-                if(aUsers){
-                    that.getModel("DetailModel").getData()["UsuariosSecundarios"] = that.formatUsersArray(aUsers);
-                    that.getModel("DetailModel").getData()["CantUsuariosSecundarios"] = aUsers.length;
-                }else{
-                    that.getModel("DetailModel").getData()["UsuariosSecundarios"] = [];
-                    that.getModel("DetailModel").getData()["CantUsuariosSecundarios"] = 0;
-                }
-                that.getModel("DetailModel").refresh(true);
+                    //Fin de lectura
+                    if(aUsers.length > 0){
+                        that.getModel("DetailModel").getData()["UsuariosSecundarios"] = that.formatUsersArray(aUsers);
+                        that.getModel("DetailModel").getData()["CantUsuariosSecundarios"] = aUsers.length;
+                    }else{
+                        that.getModel("DetailModel").getData()["UsuariosSecundarios"] = [];
+                        that.getModel("DetailModel").getData()["CantUsuariosSecundarios"] = 0;
+                    }
+                    that.getModel("DetailModel").refresh(true);
                 }).catch(oError =>{
                     MessageBox.error(oError);
                 }).finally(oFinal =>{
@@ -632,8 +644,14 @@ sap.ui.define(
                 sFilters = 'emails.value eq "' + oUsuarioActual.Correo + '"';
                 return iasService.readUsers(deployed,sFilters);
             }).then(oResult =>{
-                that.getModel("DetailModel").getData()["UsuarioActual"] = that.formatUsersArray(oResult.Resources)[0];
-                that.getModel("DetailModel").refresh(true);
+                let oEditedUser = that.formatUsersArray(oResult.Resources)[0];
+                that.getModel("DetailModel").getData()["UsuarioActual"] = oEditedUser;
+
+                let iIndex = that.getModel("DetailModel").getData()["UsuariosSecundarios"].findIndex(x=>{
+                    return x.UserId === oEditedUser.UserId;
+                });
+
+                that.getModel("DetailModel").getData()["UsuariosSecundarios"].splice(iIndex, 1, oEditedUser);                         that.getModel("DetailModel").refresh(true);
             }).finally((oFinal) => {
                 sap.ui.core.BusyIndicator.hide();
             }).catch((oError) => {
@@ -671,7 +689,15 @@ sap.ui.define(
                     sFilters = 'emails.value eq "' + oUsuarioActual.Correo + '"';
                     return iasService.readUsers(deployed,sFilters);
                 }).then(oResult =>{
-                    that.getModel("DetailModel").getData()["UsuarioActual"] = that.formatUsersArray(oResult.Resources)[0];
+                    let oEditedUser = that.formatUsersArray(oResult.Resources)[0];
+                    that.getModel("DetailModel").getData()["UsuarioActual"] = oEditedUser;
+
+                    let iIndex = that.getModel("DetailModel").getData()["UsuariosSecundarios"].findIndex(x=>{
+                        return x.UserId === oEditedUser.UserId;
+                    });
+
+                    that.getModel("DetailModel").getData()["UsuariosSecundarios"].splice(iIndex, 1, oEditedUser);                    
+                    
                     that.getModel("DetailModel").refresh(true);
                 }).finally((oFinal) => {
                     sap.ui.core.BusyIndicator.hide();
@@ -730,28 +756,30 @@ sap.ui.define(
                             return iasService.readUsers(deployed, sFilters); 
                         }).then(oResult =>{
                             //Aqui se deben diferenciar entre los ambientes
-                //Lectura de usuarios con esquema custom
-                let aUsers = [];
-                oResult.Resources.filter( user => {
-                    return user["urn:sap:cloud:scim:schemas:extension:custom:2.0:User"]
-                }).forEach( UserCustom =>{
-                    if (UserCustom["urn:sap:cloud:scim:schemas:extension:custom:2.0:User"]["attributes"].find(customAt =>{
-                        if (customAt.name === "customAttribute2" && customAt.value.includes(that.ambiente)){
-                            return customAt;
-                        }
-                    })){
-                        aUsers.push(UserCustom);
-                    }
-                });
-                //Fin de lectura
-                if(aUsers){
-                    that.getModel("DetailModel").getData()["UsuariosSecundarios"] = that.formatUsersArray(aUsers);
-                    that.getModel("DetailModel").getData()["CantUsuariosSecundarios"] = aUsers.length;
-                }else{
-                    that.getModel("DetailModel").getData()["UsuariosSecundarios"] = [];
-                    that.getModel("DetailModel").getData()["CantUsuariosSecundarios"] = 0;
-                }
-                that.getModel("DetailModel").refresh(true);
+                            //Lectura de usuarios con esquema custom
+                            let aUsers = [];
+                            if (oResult.Resources !== undefined){
+                                oResult.Resources.filter( user => {
+                                    return user["urn:sap:cloud:scim:schemas:extension:custom:2.0:User"]
+                                }).forEach( UserCustom =>{
+                                    if (UserCustom["urn:sap:cloud:scim:schemas:extension:custom:2.0:User"]["attributes"].find(customAt =>{
+                                        if (customAt.name === "customAttribute2" && customAt.value.includes(that.ambiente)){
+                                            return customAt;
+                                        }
+                                    })){
+                                        aUsers.push(UserCustom);
+                                    }
+                                });
+                            }
+                            //Fin de lectura
+                            if(aUsers.length > 0){
+                                that.getModel("DetailModel").getData()["UsuariosSecundarios"] = that.formatUsersArray(aUsers);
+                                that.getModel("DetailModel").getData()["CantUsuariosSecundarios"] = aUsers.length;
+                            }else{
+                                that.getModel("DetailModel").getData()["UsuariosSecundarios"] = [];
+                                that.getModel("DetailModel").getData()["CantUsuariosSecundarios"] = 0;
+                            }
+                            that.getModel("DetailModel").refresh(true);
                         }).finally(oFinal =>{
                             sap.ui.core.BusyIndicator.hide();
                         }).catch(oError =>{
@@ -814,6 +842,98 @@ sap.ui.define(
                     width: "10",
 					type: EdmType.String
 				}];
+        },
+
+        handleUploadDNIFront: function(oEvent){
+            let aFiles = oEvent.getParameters().files;
+            let currentFile = aFiles[0];
+            that.getModel("UploadModel").getData().FrontDNI = currentFile;
+        },
+
+        handleUploadDNIBack: function(oEvent){
+            let aFiles = oEvent.getParameters().files;
+            let currentFile = aFiles[0];
+            that.getModel("UploadModel").getData().BackDNI = currentFile;
+        },
+        handleActionUploadDNI: function(oEvent){
+            let oObject = that.getModel("DetailModel").getData().UsuarioActual;
+            this._openDialogDinamic("uploadDocument");
+            that.setModel(new JSONModel({"id": oObject.UserId, "email": oObject.Correo}), "UploadModel");
+            this["ouploadDocument"].setModel(that.getModel("UploadModel"));
+        },
+        uploadDNI: function(jsonDni){
+            try {
+                return new Promise(function (resolve, reject) {
+                let sPath = `${window.RootPath}/services/api/dms/uploadDNI`;
+                fetch(sPath, {
+                method: 'POST',
+                headers: {
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(jsonDni)
+                }).then(response => response.json()).then(data =>{
+                    resolve(data);
+                }).catch(error =>{
+                    reject(error);
+                });
+            });
+            } catch (oError) {
+                console.log(oError);
+            }
+        },
+  
+        onGetJsonDni: function(ambiente, idUsuario, dniFront, dniBack){
+            let oDni = { 
+                "Ambiente": ambiente,
+                "IdUsuario": idUsuario,
+                "DniFront": dniFront,
+                "DniBack": dniBack
+            };
+            return oDni;
+        },
+        onUploadDocument: function(oEvent){
+            let uploadModel = that.getModel("UploadModel").getData();
+            if ((uploadModel.FrontDNI === undefined || uploadModel.FrontDNI === "") || (uploadModel.BackDNI === undefined || uploadModel.BackDNI === "")){
+                MessageToast.show(that._getI18nText("msgOnErrorCompleteDocument"));
+            }else{
+                sap.ui.core.BusyIndicator.show();
+                let oObjetoUsuario;
+                iasService.readSingleUser(deployed, uploadModel.id).then(oResult =>{
+                    let bFlagExisteDocumento = (oResult["urn:sap:cloud:scim:schemas:extension:custom:2.0:User"].attributes.find(x =>{
+                        return x.name === "customAttribute10";
+                    }) === undefined ? false : true);
+
+                    if (bFlagExisteDocumento){
+                        MessageBox.error(that._getI18nText("msgOnErrorDocumentAlreadySubmitted"));
+                        return Promise.reject();
+                    }
+                    
+                   let oBody = that.onGetJsonDni(that.ambiente, uploadModel.id, uploadModel.FrontDNI, uploadModel.BackDNI);
+                   oObjetoUsuario = oResult;
+                   
+                   return that.uploadDNI(oBody);
+                }).then(oResult =>{
+                    oObjetoUsuario["urn:sap:cloud:scim:schemas:extension:custom:2.0:User"].attributes.push({
+                        "name": "customAttribute10",
+                        "value": JSON.stringify({
+                            "front": oResult[0].documento.Id,
+                            "back": oResult[1].documento.Id
+                        })
+                    });
+                    
+                    return iasService.updateByPutUser(deployed, oObjetoUsuario, oObjetoUsuario.id);
+                }).then(oResult =>{
+                    MessageToast.show(that._getI18nText("msgOnSuccessDocument"));
+                }).catch(oError =>{
+                    console.log(oError);
+                }).finally(oFinal =>{
+                    sap.ui.core.BusyIndicator.hide();
+                    delete that.getModel("UploadModel").getData().FrontDNI;
+                    delete that.getModel("UploadModel").getData().BackDNI;
+                    oEvent.getSource().getParent().close();
+                });
+            }
         }
 
       }

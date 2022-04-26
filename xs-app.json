@@ -3,6 +3,13 @@
   "authenticationMethod": "route",
   "routes": [
     {
+        "source": "^/services/(.*)$",
+        "target": "/services/$1",
+        "destination": "destination_cap_portal_cliente",
+        "authenticationType": "none",
+        "csrfProtection": false
+    },
+    {
       "source": "^/v2/(.*)$",
       "target": "/v2/$1",
       "destination": "destination_cap_portal_cliente",

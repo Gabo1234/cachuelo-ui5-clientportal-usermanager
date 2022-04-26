@@ -23,6 +23,9 @@ server:
           - path: /scim
             url: https://atndrk8uo.accounts.ondemand.com
             destination: destination_ias_api
+          - path: /services
+            url: https://saasa-cargarampa-qa-backend-clientportal-srv.cfapps.br10.hana.ondemand.com
+            destination: destination_cap_portal_cliente
     - name: fiori-tools-appreload
       afterMiddleware: compression
       configuration:

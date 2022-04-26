@@ -784,6 +784,8 @@ sap.ui.define(
             sMinute = "00",
             sSecond = "00";
 
+            sDay = sDay.padStart(2,0);
+
             return sYear + "-" + sMonth + "-" + sDay + "T" + sHour + ":" + sMinute + ":" + sSecond + "Z";
       }
     };
