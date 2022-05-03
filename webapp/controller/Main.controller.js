@@ -200,7 +200,7 @@ sap.ui.define(
                 }),
                 new sap.ui.table.RowActionItem({
                     icon: "sap-icon://business-card",
-                    text: "Subir DNI",
+                    text: "Gestionar DNI",
                     press: fnPressUploadDNI,
                     visible: oAdmin
                 }),
@@ -473,9 +473,20 @@ sap.ui.define(
             let sFilters = 'emails.value eq "' + oObject.Correo + '"';
             iasService.readUsers(deployed, sFilters).then(oResult =>{
                 let aCamposCustom = oResult.Resources[0]["urn:sap:cloud:scim:schemas:extension:custom:2.0:User"].attributes;
-                if(aCamposCustom.find(x=>{return x.name === "customAttribute10"}) !== undefined){
-                    console.log("Tengo foto");
+                let aPromise = [];
+                let camposDNI = aCamposCustom.find(x=>{return x.name === "customAttribute10"});
+                if( camposDNI !== undefined){
+                    camposDNI = JSON.parse(camposDNI.value);
                     that.getModel("UploadModel").getData().bDNI = true;
+
+                    aPromise.push(that.getDocumentFromDS(camposDNI.front));
+                    aPromise.push(that.getDocumentFromDS(camposDNI.back));
+
+                    Promise.all(aPromise).then(aResults =>{
+                        that.getModel("UploadModel").getData().DNIAnverso = aResults[0];
+                        that.getModel("UploadModel").getData().DNIReverso = aResults[1];
+                        that.getModel("UploadModel").refresh(true);
+                    });
 
                 }else{
                     let sDefaultImage = sap.ui.require.toUrl(
@@ -1248,7 +1259,7 @@ sap.ui.define(
               }
           },
   
-          onCargarImagenTest: function(){
+          getDocumentFromDS: function(sId){
             let sPath = `${window.RootPath}/services/api/DocumentServiceService?documentoId=` + sId;
             return new Promise(function (resolve, reject) {
                 fetch(sPath, {
@@ -1268,28 +1279,6 @@ sap.ui.define(
             try {
                 return new Promise(function (resolve, reject) {
                 let sPath = `${window.RootPath}/services/api/dms/uploadDNI`;
-                fetch(sPath, {
-                method: 'POST',
-                headers: {
-                    'Accept': 'application/json',
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify(jsonDni)
-                }).then(response => response.json()).then(data =>{
-                    resolve(data);
-                }).catch(error =>{
-                    reject(error);
-                });
-            });
-            } catch (oError) {
-                console.log(oError);
-            }
-        },
-
-        deleteDNI: function(jsonDni){
-            try {
-                return new Promise(function (resolve, reject) {
-                let sPath = `${window.RootPath}/services/api/dms/deleteDNI`;
                 fetch(sPath, {
                 method: 'POST',
                 headers: {
@@ -1329,10 +1318,10 @@ sap.ui.define(
                         return x.name === "customAttribute10";
                     }) === undefined ? false : true);
 
-                    if (bFlagExisteDocumento){
+                    /* if (bFlagExisteDocumento){
                         MessageBox.error(that._getI18nText("msgOnErrorDocumentAlreadySubmitted"));
                         return Promise.reject();
-                    }
+                    } */
                     
                    let oBody = that.onGetJsonDni(that.ambiente, uploadModel.id, uploadModel.FrontDNI, uploadModel.BackDNI);
                    oObjetoUsuario = oResult;
@@ -1349,50 +1338,24 @@ sap.ui.define(
                     
                     return iasService.updateByPutUser(deployed, oObjetoUsuario, oObjetoUsuario.id);
                 }).then(oResult =>{
-                    MessageToast.show(that._getI18nText("msgOnSuccessDocument"));
+                    MessageBox.success(that._getI18nText("msgOnSuccessDocument"));
                 }).catch(oError =>{
                     console.log(oError);
                 }).finally(oFinal =>{
                     sap.ui.core.BusyIndicator.hide();
                     delete that.getModel("UploadModel").getData().FrontDNI;
                     delete that.getModel("UploadModel").getData().BackDNI;
-                    oEvent.getSource().getParent().close();
+                    this["ouploadDocument"].close();
                 });
             }
         },
 
-        onDeleteDocument: function(oEvent){
-            let uploadModel = that.getModel("UploadModel").getData();
-            if (!uploadModel.bDNI){
-                MessageBox.error(that._getI18nText("msgOnErrorDocumentNotConfigurated"));
-            }else{
-                sap.ui.core.BusyIndicator.show();
-                let oObjetoUsuario;
-                iasService.readSingleUser(deployed, uploadModel.id).then(oResult =>{
-                    let oBody = ""; //Verificar
-                    oObjetoUsuario = oResult;
-                    return that.deleteDNI(oBody);
-                }).then(oResult =>{
-                    oObjetoUsuario["urn:sap:cloud:scim:schemas:extension:custom:2.0:User"]
-                    .attributes.find(x=>{return x.name === "customAttribute10";}).value = "";
-
-                    return iasService.updateByPutUser(deployed, oObjetoUsuario, oObjetoUsuario.id);
-                }).then(oResult =>{
-                    MessageToast.show(that._getI18nText("msgOnSuccessDeleteDocument"));
-                }).catch(oError =>{
-                    console.log(oError);
-                }).finally(oFinal =>{
-                    sap.ui.core.BusyIndicator.hide();
-                    oEvent.getSource().getParent().close();
-                });
-
-            }
-
-
-
-   
-           
-            
+        blobToBase64: function(blob) {
+            return new Promise((resolve, _) => {
+              const reader = new FileReader();
+              reader.onloadend = () => resolve(reader.result.split(",")[1]);
+              reader.readAsDataURL(blob);
+            });
         }
   
         }

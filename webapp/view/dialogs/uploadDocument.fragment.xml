@@ -51,7 +51,7 @@
                 <core:Title text="{i18n>titleDocument2}" />
                 <Label text="{i18n>fileUploaderDNIFront}"/>
                 <u:FileUploader placeholder="{i18n>phFileUploaderDNIFront}" 
-                    fileType="png,jpg"
+                    fileType="png,jpg,jpeg"
                     width="100%"
                     multiple="false" 
                     maximumFileSize="5"
@@ -60,7 +60,7 @@
                 </u:FileUploader>
                 <Label text="{i18n>fileUploaderDNIBack}"/>
                 <u:FileUploader placeholder="{i18n>phFileUploaderDNIBack}" 
-                    fileType="png,jpg"
+                    fileType="png,jpg,jpeg"
                     width="100%"
                     maximumFileSize="5"
                     multiple="false" 
@@ -72,7 +72,6 @@
     </content>
     <buttons> 
         <Button type="Emphasized" text="{i18n>btnSubirDocumento}" press="onUploadDocument" />
-        <Button type="Reject" text="{i18n>btnEliminarDocumento}" press="onDeleteDocument" />
         <Button type="Reject" text="{i18n>btnCancelar}" press="onCloseDialog"/>
     </buttons>
 

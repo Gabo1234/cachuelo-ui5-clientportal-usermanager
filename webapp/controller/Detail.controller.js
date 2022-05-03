@@ -845,21 +845,77 @@ sap.ui.define(
         },
 
         handleUploadDNIFront: function(oEvent){
-            let aFiles = oEvent.getParameters().files;
+            let aFiles=oEvent.getParameters().files;
             let currentFile = aFiles[0];
-            that.getModel("UploadModel").getData().FrontDNI = currentFile;
+
+            if (currentFile) {
+                var reader = new FileReader();
+                reader.onload = function(readerEvt) {
+                    var binaryString = readerEvt.target.result;
+                    that.getModel("UploadModel").getData().FrontDNI = btoa(binaryString);
+                };
+                reader.readAsBinaryString(currentFile);
+            }
         },
 
         handleUploadDNIBack: function(oEvent){
-            let aFiles = oEvent.getParameters().files;
+            let aFiles=oEvent.getParameters().files;
             let currentFile = aFiles[0];
-            that.getModel("UploadModel").getData().BackDNI = currentFile;
+
+            if (currentFile) {
+                var reader = new FileReader();
+        
+                reader.onload = function(readerEvt) {
+                    var binaryString = readerEvt.target.result;
+                    that.getModel("UploadModel").getData().BackDNI = btoa(binaryString);
+                };
+        
+                 reader.readAsBinaryString(currentFile);
+            }
         },
         handleActionUploadDNI: function(oEvent){
-            let oObject = that.getModel("DetailModel").getData().UsuarioActual;
-            this._openDialogDinamic("uploadDocument");
-            that.setModel(new JSONModel({"id": oObject.UserId, "email": oObject.Correo}), "UploadModel");
-            this["ouploadDocument"].setModel(that.getModel("UploadModel"));
+            let oObject = that.getModel("DetailModel").getData()["UsuarioActual"];
+            that.setModel(new JSONModel({"id": oObject.UserId, "email": oObject.Correo, "frontDNI": "", "backDNI":""}), "UploadModel");
+
+
+            sap.ui.core.BusyIndicator.show();
+            let sFilters = 'emails.value eq "' + oObject.Correo + '"';
+            iasService.readUsers(deployed, sFilters).then(oResult =>{
+                let aCamposCustom = oResult.Resources[0]["urn:sap:cloud:scim:schemas:extension:custom:2.0:User"].attributes;
+                let aPromise = [];
+                let camposDNI = aCamposCustom.find(x=>{return x.name === "customAttribute10"});
+                if( camposDNI !== undefined){
+                    camposDNI = JSON.parse(camposDNI.value);
+                    that.getModel("UploadModel").getData().bDNI = true;
+
+                    aPromise.push(that.getDocumentFromDS(camposDNI.front));
+                    aPromise.push(that.getDocumentFromDS(camposDNI.back));
+
+                    Promise.all(aPromise).then(aResults =>{
+                        that.getModel("UploadModel").getData().DNIAnverso = aResults[0];
+                        that.getModel("UploadModel").getData().DNIReverso = aResults[1];
+                        that.getModel("UploadModel").refresh(true);
+                    });
+
+                }else{
+                    let sDefaultImage = sap.ui.require.toUrl(
+                        "clientportal/saasa/com/pe/usermanager/assets/NotFound.jpg"
+                    );
+                    that.getModel("UploadModel").getData().bDNI = false;
+
+                    that.getModel("UploadModel").getData().DNIAnverso = sDefaultImage;
+                    that.getModel("UploadModel").getData().DNIReverso = sDefaultImage;
+
+                }
+                console.log(oResult);
+            }).catch(oError =>{
+                console.log(oError);
+            }).finally(() =>{
+                sap.ui.core.BusyIndicator.hide();
+                that.getModel("UploadModel").refresh(true);
+                this._openDialogDinamic("uploadDocument");
+                this["ouploadDocument"].setModel(that.getModel("UploadModel"));
+            });
         },
         uploadDNI: function(jsonDni){
             try {
@@ -881,6 +937,22 @@ sap.ui.define(
             } catch (oError) {
                 console.log(oError);
             }
+        },
+        getDocumentFromDS: function(sId){
+            let sPath = `${window.RootPath}/services/api/DocumentServiceService?documentoId=` + sId;
+            return new Promise(function (resolve, reject) {
+                fetch(sPath, {
+                    method: 'GET'
+                }).then(oResult => oResult.arrayBuffer()).then(oResult =>{
+                    var blob = new Blob([oResult], {type: "image/jpeg"});
+                    
+                    // process to auto download it
+                    const fileURL = URL.createObjectURL(blob);
+                    resolve(fileURL);
+                }).catch(oError =>{
+                    reject(oError);
+                });
+            });
         },
   
         onGetJsonDni: function(ambiente, idUsuario, dniFront, dniBack){
@@ -904,10 +976,10 @@ sap.ui.define(
                         return x.name === "customAttribute10";
                     }) === undefined ? false : true);
 
-                    if (bFlagExisteDocumento){
+                    /* if (bFlagExisteDocumento){
                         MessageBox.error(that._getI18nText("msgOnErrorDocumentAlreadySubmitted"));
                         return Promise.reject();
-                    }
+                    } */
                     
                    let oBody = that.onGetJsonDni(that.ambiente, uploadModel.id, uploadModel.FrontDNI, uploadModel.BackDNI);
                    oObjetoUsuario = oResult;
@@ -924,14 +996,14 @@ sap.ui.define(
                     
                     return iasService.updateByPutUser(deployed, oObjetoUsuario, oObjetoUsuario.id);
                 }).then(oResult =>{
-                    MessageToast.show(that._getI18nText("msgOnSuccessDocument"));
+                    MessageBox.success(that._getI18nText("msgOnSuccessDocument"));
                 }).catch(oError =>{
                     console.log(oError);
                 }).finally(oFinal =>{
                     sap.ui.core.BusyIndicator.hide();
                     delete that.getModel("UploadModel").getData().FrontDNI;
                     delete that.getModel("UploadModel").getData().BackDNI;
-                    oEvent.getSource().getParent().close();
+                    this["ouploadDocument"].close();
                 });
             }
         }

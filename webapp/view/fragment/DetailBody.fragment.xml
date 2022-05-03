@@ -30,7 +30,7 @@
                 
                 <Button visible="{DetailModel>/IsAdmin}" text="{i18n>btnEditar}" id="idBtnEditSecondaryUser" type="Transparent" enabled="false" press="onEditUser"/>
                 <Button visible="{DetailModel>/IsAdmin}" text="{i18n>btnAsignarRoles}" id="idBtnAssignRolesSecondaryUser" type="Transparent" enabled="false" press="onAssignRoles"/>
-                <Button visible="{DetailModel>/IsAdmin}" text="{i18n>btnSubirDocumento}" id="idBtnUploadDocument" type="Transparent" enabled="false" press="handleActionUploadDNI"/>    
+                <Button visible="{DetailModel>/IsAdmin}" text="{i18n>btnDocumento}" id="idBtnUploadDocument" type="Transparent" enabled="false" press="handleActionUploadDNI"/>    
                 <Button visible="{DetailModel>/IsAdmin}" text="{i18n>btnBorrar}" id="idBtnDeleteSecondaryUser" type="Transparent" enabled="false" press="onDeleteUser"/>
                 <Button visible="{DetailModel>/IsAdmin}" text="{i18n>btnBloquearDesbloquear}" id="idBtnBlockSecondaryUser" type="Transparent" enabled="false" press="onBlockUser"/>
                 <ToolbarSeparator/>
