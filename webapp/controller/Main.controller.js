@@ -466,9 +466,36 @@ sap.ui.define(
 
           handleActionUploadDNI: function(oEvent){
             let oObject = oEvent.getParameter("row").getBindingContext("AppModel").getObject();
-            this._openDialogDinamic("uploadDocument");
-            that.setModel(new JSONModel({"id": oObject.UserId, "email": oObject.Correo}), "UploadModel");
-            this["ouploadDocument"].setModel(that.getModel("UploadModel"));
+            that.setModel(new JSONModel({"id": oObject.UserId, "email": oObject.Correo, "frontDNI": "", "backDNI":""}), "UploadModel");
+
+
+            sap.ui.core.BusyIndicator.show();
+            let sFilters = 'emails.value eq "' + oObject.Correo + '"';
+            iasService.readUsers(deployed, sFilters).then(oResult =>{
+                let aCamposCustom = oResult.Resources[0]["urn:sap:cloud:scim:schemas:extension:custom:2.0:User"].attributes;
+                if(aCamposCustom.find(x=>{return x.name === "customAttribute10"}) !== undefined){
+                    console.log("Tengo foto");
+                    that.getModel("UploadModel").getData().bDNI = true;
+
+                }else{
+                    let sDefaultImage = sap.ui.require.toUrl(
+                        "clientportal/saasa/com/pe/usermanager/assets/NotFound.jpg"
+                    );
+                    that.getModel("UploadModel").getData().bDNI = false;
+
+                    that.getModel("UploadModel").getData().DNIAnverso = sDefaultImage;
+                    that.getModel("UploadModel").getData().DNIReverso = sDefaultImage;
+
+                }
+                console.log(oResult);
+            }).catch(oError =>{
+                console.log(oError);
+            }).finally(() =>{
+                sap.ui.core.BusyIndicator.hide();
+                that.getModel("UploadModel").refresh(true);
+                this._openDialogDinamic("uploadDocument");
+                this["ouploadDocument"].setModel(that.getModel("UploadModel"));
+            });
           },
 
           
@@ -1258,6 +1285,28 @@ sap.ui.define(
                 console.log(oError);
             }
         },
+
+        deleteDNI: function(jsonDni){
+            try {
+                return new Promise(function (resolve, reject) {
+                let sPath = `${window.RootPath}/services/api/dms/deleteDNI`;
+                fetch(sPath, {
+                method: 'POST',
+                headers: {
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(jsonDni)
+                }).then(response => response.json()).then(data =>{
+                    resolve(data);
+                }).catch(error =>{
+                    reject(error);
+                });
+            });
+            } catch (oError) {
+                console.log(oError);
+            }
+        },
   
         onGetJsonDni: function(ambiente, idUsuario, dniFront, dniBack){
             let oDni = { 
@@ -1310,6 +1359,40 @@ sap.ui.define(
                     oEvent.getSource().getParent().close();
                 });
             }
+        },
+
+        onDeleteDocument: function(oEvent){
+            let uploadModel = that.getModel("UploadModel").getData();
+            if (!uploadModel.bDNI){
+                MessageBox.error(that._getI18nText("msgOnErrorDocumentNotConfigurated"));
+            }else{
+                sap.ui.core.BusyIndicator.show();
+                let oObjetoUsuario;
+                iasService.readSingleUser(deployed, uploadModel.id).then(oResult =>{
+                    let oBody = ""; //Verificar
+                    oObjetoUsuario = oResult;
+                    return that.deleteDNI(oBody);
+                }).then(oResult =>{
+                    oObjetoUsuario["urn:sap:cloud:scim:schemas:extension:custom:2.0:User"]
+                    .attributes.find(x=>{return x.name === "customAttribute10";}).value = "";
+
+                    return iasService.updateByPutUser(deployed, oObjetoUsuario, oObjetoUsuario.id);
+                }).then(oResult =>{
+                    MessageToast.show(that._getI18nText("msgOnSuccessDeleteDocument"));
+                }).catch(oError =>{
+                    console.log(oError);
+                }).finally(oFinal =>{
+                    sap.ui.core.BusyIndicator.hide();
+                    oEvent.getSource().getParent().close();
+                });
+
+            }
+
+
+
+   
+           
+            
         }
   
         }
