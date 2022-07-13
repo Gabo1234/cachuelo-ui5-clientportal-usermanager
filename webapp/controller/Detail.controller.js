@@ -64,6 +64,9 @@ sap.ui.define(
             //Creacion de modelos
             that.setModel(new JSONModel({}), "DetailModel");
             that.setModel(new JSONModel({}), "NewUserModel");
+            
+            that.getModel("DetailModel").setSizeLimit("2000");
+
             //Configuracion Model
             that.setModel(new JSONModel({}), "ConfigModel");
             that.setConfig();            
@@ -91,7 +94,7 @@ sap.ui.define(
 
                 sFilters = 'urn:ietf:params:scim:schemas:extension:enterprise:2.0:User:costCenter eq "' + that.getModel("DetailModel").getData()["UsuarioPrincipal"].Ruc + '"'
                 + ' and ' + 'urn:ietf:params:scim:schemas:extension:enterprise:2.0:User:division eq "Secundario"';
-                return iasService.readUsers(deployed, sFilters);
+                return iasService.readUsersWithPagination(deployed, sFilters);
             }).then(oResult =>{
                 //Aqui se deben diferenciar entre los ambientes
                 //Lectura de usuarios con esquema custom
@@ -210,13 +213,38 @@ sap.ui.define(
         },
         onSaveMainUser: function(){
             let oUserEdited = that.getModel("DetailModel").getData()["UsuarioPrincipal"], sFilters;
+            let oUserObject;
             sFilters = 'emails.value eq "' + oUserEdited.Correo + '"';
 
-            iasService.readUsers(deployed, sFilters).then(oResult => {
-                oResult.Resources[0].name.familyName = oUserEdited.Apellidos;
-                oResult.Resources[0].name.givenName = oUserEdited.Nombres;
-                oResult.Resources[0].phoneNumbers[0].value = oUserEdited.Telefono;
-                oResult.Resources[0]["urn:ietf:params:scim:schemas:extension:sap:2.0:User"].validTo = formatter.dateToZDate(oUserEdited.Vigencia);
+            iasService.readUsersWithPagination(deployed, sFilters).then(oResult => {
+                oUserObject = oResult.Resources[0];
+                oUserObject.name.familyName = oUserEdited.Apellidos;
+                oUserObject.name.givenName = oUserEdited.Nombres;
+                oUserObject.phoneNumbers[0].value = oUserEdited.Telefono;
+                oUserObject["urn:ietf:params:scim:schemas:extension:sap:2.0:User"].validTo = formatter.dateToZDate(oUserEdited.Vigencia);
+
+
+                if (oUserEdited.hasOwnProperty("RolAgenteAduana")){
+                    if (oUserEdited["RolAgenteAduana"]){
+                        that.editCustomAttribute(oUserObject, 3, "AgenteAduanas");
+                    } else {
+                        that.editCustomAttribute(oUserObject, 3, "");
+                    }
+                }
+                if (oUserEdited.hasOwnProperty("RolAgenteCarga")){
+                    if (oUserEdited["RolAgenteCarga"]){
+                        that.editCustomAttribute(oUserObject, 4, "AgenteCarga");
+                    }else{
+                        that.editCustomAttribute(oUserObject, 4, "");
+                    }
+                }
+                if (oUserEdited.hasOwnProperty("RolCliente")){
+                    if (oUserEdited["RolCliente"]){
+                        that.editCustomAttribute(oUserObject, 5, "Cliente");
+                    }else{
+                        that.editCustomAttribute(oUserObject, 5, "");
+                    }
+                }
 
                 return iasService.updateByPutUser(deployed,oResult.Resources[0], oUserEdited.UserId);
             }).then(oResult =>{
@@ -307,7 +335,7 @@ sap.ui.define(
                             
                             sFilters = 'urn:ietf:params:scim:schemas:extension:enterprise:2.0:User:costCenter eq "' + that.getModel("DetailModel").getData()["UsuarioPrincipal"].Ruc + '"'
                             + ' and ' + 'urn:ietf:params:scim:schemas:extension:enterprise:2.0:User:division eq "Secundario"';
-                            return iasService.readUsers(deployed, sFilters); 
+                            return iasService.readUsersWithPagination(deployed, sFilters); 
                         }).then(oResult =>{
                             //Aqui se deben diferenciar entre los ambientes
                             //Lectura de usuarios con esquema custom
@@ -375,7 +403,7 @@ sap.ui.define(
                 let oUserObject = that.getUserObject(oUserForm, "Secundario"), sFilters;
                 sap.ui.core.BusyIndicator.show();
                 sFilters = 'userName co "' + oUserObject.userName + '"'; //Buscar por displayName
-                iasService.readUsers(deployed, sFilters).then(oResult =>{
+                iasService.readUsersWithPagination(deployed, sFilters).then(oResult =>{
                     oUserObject.userName += String(oResult.totalResults + 1).padStart(3,0);
                     oUserObject.displayName += String(oResult.totalResults + 1).padStart(3,0);
                     
@@ -391,7 +419,7 @@ sap.ui.define(
 
                     sFilters = 'urn:ietf:params:scim:schemas:extension:enterprise:2.0:User:costCenter eq "' + that.getModel("DetailModel").getData()["UsuarioPrincipal"].Ruc + '"'
                 + ' and ' + 'urn:ietf:params:scim:schemas:extension:enterprise:2.0:User:division eq "Secundario"';
-                return iasService.readUsers(deployed, sFilters);
+                return iasService.readUsersWithPagination(deployed, sFilters);
                 }).then(oResult =>{
                     //Aqui se deben diferenciar entre los ambientes
                     //Lectura de usuarios con esquema custom
@@ -419,7 +447,9 @@ sap.ui.define(
                     }
                     that.getModel("DetailModel").refresh(true);
                 }).catch(oError =>{
-                    MessageBox.error(oError);
+                    if (oError.status === 409){
+                        MessageBox.error(this._getI18nText("msgOnErrorCreateUserUniqueness"));
+                    }
                 }).finally(oFinal =>{
                     sap.ui.core.BusyIndicator.hide();
                     oDialog.close();
@@ -451,7 +481,7 @@ sap.ui.define(
                 sap.ui.core.BusyIndicator.show();
 
                 sFilters = 'emails.value eq "' + oUserBefore.Correo + '"';
-                iasService.readUsers(deployed, sFilters).then(oResult =>{
+                iasService.readUsersWithPagination(deployed, sFilters).then(oResult =>{
                     oUserObject["userName"] = oResult.Resources[0].userName;
                     oUserObject["displayName"] = oResult.Resources[0].displayName;
                     oUserObject["active"] = oUserBefore["Status"];
@@ -461,7 +491,7 @@ sap.ui.define(
 
                     sFilters = 'urn:ietf:params:scim:schemas:extension:enterprise:2.0:User:costCenter eq "' + that.getModel("DetailModel").getData()["UsuarioPrincipal"].Ruc + '"'
                 + ' and ' + 'urn:ietf:params:scim:schemas:extension:enterprise:2.0:User:division eq "Secundario"';
-                return iasService.readUsers(deployed, sFilters);
+                return iasService.readUsersWithPagination(deployed, sFilters);
                 }).then(oResult =>{
                     //Aqui se deben diferenciar entre los ambientes
                     //Lectura de usuarios con esquema custom
@@ -642,7 +672,7 @@ sap.ui.define(
                 MessageToast.show(that._getI18nText("msgOnSuccessUnassignedRole"));
                 //Obtener los roles del nuevo usuario
                 sFilters = 'emails.value eq "' + oUsuarioActual.Correo + '"';
-                return iasService.readUsers(deployed,sFilters);
+                return iasService.readUsersWithPagination(deployed,sFilters);
             }).then(oResult =>{
                 let oEditedUser = that.formatUsersArray(oResult.Resources)[0];
                 that.getModel("DetailModel").getData()["UsuarioActual"] = oEditedUser;
@@ -687,7 +717,7 @@ sap.ui.define(
                     MessageToast.show(that._getI18nText("msgOnSuccessAssignedRole"));
                     //Obtener los roles del nuevo usuario
                     sFilters = 'emails.value eq "' + oUsuarioActual.Correo + '"';
-                    return iasService.readUsers(deployed,sFilters);
+                    return iasService.readUsersWithPagination(deployed,sFilters);
                 }).then(oResult =>{
                     let oEditedUser = that.formatUsersArray(oResult.Resources)[0];
                     that.getModel("DetailModel").getData()["UsuarioActual"] = oEditedUser;
@@ -700,6 +730,7 @@ sap.ui.define(
                     
                     that.getModel("DetailModel").refresh(true);
                 }).finally((oFinal) => {
+                    that.getModel("DetailModel").refresh(true);
                     sap.ui.core.BusyIndicator.hide();
                 }).catch((oError) => {
                     console.log(oError);
@@ -747,13 +778,13 @@ sap.ui.define(
 					if(sAction === "Modificar usuario"){
                         sap.ui.core.BusyIndicator.show();
                         sFilters = 'emails.value eq "' + oUsuarioActual.Correo + '"';
-                        iasService.readUsers(deployed, sFilters).then(oResult =>{
+                        iasService.readUsersWithPagination(deployed, sFilters).then(oResult =>{
                             oResult.Resources[0].active = !oResult.Resources[0].active;
                             return iasService.updateByPutUser(deployed, oResult.Resources[0], oUsuarioActual["UserId"]);
                         }).then(oResult =>{
                             sFilters = 'urn:ietf:params:scim:schemas:extension:enterprise:2.0:User:costCenter eq "' + that.getModel("DetailModel").getData()["UsuarioPrincipal"].Ruc + '"'
                             + ' and ' + 'urn:ietf:params:scim:schemas:extension:enterprise:2.0:User:division eq "Secundario"';
-                            return iasService.readUsers(deployed, sFilters); 
+                            return iasService.readUsersWithPagination(deployed, sFilters); 
                         }).then(oResult =>{
                             //Aqui se deben diferenciar entre los ambientes
                             //Lectura de usuarios con esquema custom
@@ -880,7 +911,7 @@ sap.ui.define(
 
             sap.ui.core.BusyIndicator.show();
             let sFilters = 'emails.value eq "' + oObject.Correo + '"';
-            iasService.readUsers(deployed, sFilters).then(oResult =>{
+            iasService.readUsersWithPagination(deployed, sFilters).then(oResult =>{
                 let aCamposCustom = oResult.Resources[0]["urn:sap:cloud:scim:schemas:extension:custom:2.0:User"].attributes;
                 let aPromise = [];
                 let camposDNI = aCamposCustom.find(x=>{return x.name === "customAttribute10"});

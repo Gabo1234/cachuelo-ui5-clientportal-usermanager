@@ -8,7 +8,7 @@
 		id="idUserTable"
 		rows="{AppModel>/UsuariosPrincipales}"
 		selectionMode="None"
-		visibleRowCount="10"
+		visibleRowCount="15"
 		enableSelectAll="false"
 		ariaLabelledBy="title"
 	>

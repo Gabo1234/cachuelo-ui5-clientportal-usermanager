@@ -12,10 +12,8 @@ sap.ui.define([
         "use strict";
         let that = this;
         that.ambiente = "QAS";
-        //PRD 
-        //that.appNamespace = "PORTAL"; 
-        // QAS 
-        that.appNamespace = "CLIENTPORTAL"; 
+        that.appNamespace = "ClientPortal"; 
+
 
 
         return Controller.extend("clientportal.saasa.com.pe.usermanager.controller.BaseController", {
@@ -171,7 +169,7 @@ sap.ui.define([
         
                         if (oUser["groups"] !== undefined){
                             oFormattedUser["Grupos"] = oUser["groups"].filter(grupo =>{
-                                return grupo["display"].includes(that.ambiente + "_" + that.appNamespace);
+                                return grupo["display"].includes(that.appNamespace + " -") && grupo["display"].includes("- " + that.ambiente); 
                             });
                         }
         
@@ -196,6 +194,33 @@ sap.ui.define([
 
                 handleTypeMissmatch: function(){
                     MessageToast.show(this._getI18nText("msgErrorTypeMismatch"));
+                },
+
+                editCustomAttribute: function(oUser, idStat, sContent){
+                    let bCustomSchema = (oUser["urn:sap:cloud:scim:schemas:extension:custom:2.0:User"] === undefined) ? false : true;
+                    let oAtt = {
+                        "name" : "customAttribute" + idStat,
+                        "value": sContent
+                    };
+
+                    if (bCustomSchema){
+                        let aAttributes = oUser["urn:sap:cloud:scim:schemas:extension:custom:2.0:User"].attributes;
+                        if (sContent === ""){
+                            aAttributes.splice(aAttributes.indexOf(aAttributes.filter((x) =>{return x.name === "customAttribute" + idStat; })),1);
+                        }else{
+                            let oAttToEdit = aAttributes.find(x =>{return x.name === "customAttribute" + idStat; });
+                            if (oAttToEdit !== undefined){
+                                oAttToEdit.value = sContent;
+                            }else{
+                                aAttributes.push(oAtt);
+                            }
+                        }
+                    }else{
+                        oUser.schemas.push("urn:sap:cloud:scim:schemas:extension:custom:2.0:User");
+                        oUser["urn:sap:cloud:scim:schemas:extension:custom:2.0:User"] = {"attributes" : [oAtt]};
+                    }
+                    
+                    
                 }
 
         });

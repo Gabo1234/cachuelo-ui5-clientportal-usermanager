@@ -9,7 +9,7 @@
 		id="idUserTableDetail"
 		rows="{DetailModel>/UsuariosSecundarios}"
 		selectionMode="Single"
-		visibleRowCount="10"
+		visibleRowCount="15"
 		enableSelectAll="false"
 		ariaLabelledBy="title"
 	>
