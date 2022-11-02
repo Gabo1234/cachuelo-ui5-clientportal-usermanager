@@ -23,7 +23,7 @@ sap.ui.define([
 
                 
 
-                window.AppId = this.getMetadata().getManifest()["sap.app"].id
+                window.AppId = this.getMetadata().getManifest()["sap.app"].id;
                 console.log("*************************************")
                 if (window.location.href.indexOf("applicationstudio.cloud.sap") > -1) {
                     window.RootPath = "";

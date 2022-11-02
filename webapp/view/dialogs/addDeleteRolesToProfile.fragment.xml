@@ -1,0 +1,18 @@
+<core:FragmentDefinition xmlns="sap.m"
+    xmlns:core="sap.ui.core">
+    <SelectDialog title="{i18n>selectDialogTitle}" 
+        multiSelect="true"
+        search="onSearchRoles"
+        confirm="onConfirmRolesToAddDelete"
+		cancel="onCloseDialog"
+		items="{
+			path: 'AppModel>/Groups'
+		}">
+        <StandardListItem
+			title="{AppModel>Nombre}"
+			icon="sap-icon://role"
+			iconDensityAware="false"
+			iconInset="false"
+			type="Active" />
+    </SelectDialog>
+</core:FragmentDefinition>

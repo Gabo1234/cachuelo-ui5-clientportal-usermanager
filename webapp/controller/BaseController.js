@@ -2,16 +2,20 @@ sap.ui.define([
     "sap/ui/core/mvc/Controller",
     "sap/ui/core/UIComponent",
     "sap/m/MessageBox",
-
+    "sap/m/MessageToast",
     "../model/formatter"
 ],
     /**
      * @param {typeof sap.ui.core.mvc.Controller} Controller
      */
-    function (Controller, UIComponent, MessageBox, Formatter) {
+    function (Controller, UIComponent, MessageBox, MessageToast, Formatter) {
         "use strict";
         let that = this;
-        that.appNamespace = "ClientPortal";
+        that.ambiente = "PRD";
+        that.appNamespace = "ClientPortal"; 
+
+
+
         return Controller.extend("clientportal.saasa.com.pe.usermanager.controller.BaseController", {
             /**
              * Convenience method for accessing the router.
@@ -149,10 +153,24 @@ sap.ui.define([
                         oFormattedUser["Ruc"] = oUser["urn:ietf:params:scim:schemas:extension:enterprise:2.0:User"].costCenter;
                         oFormattedUser["RazonSocial"] = oUser["urn:ietf:params:scim:schemas:extension:enterprise:2.0:User"].organization;
                         oFormattedUser["Status"] = oUser["active"];
+
+                        if(oUser["urn:sap:cloud:scim:schemas:extension:custom:2.0:User"]){
+                            oUser["urn:sap:cloud:scim:schemas:extension:custom:2.0:User"].attributes.find(x=>{
+                                if (x.name === "customAttribute3"){
+                                    oFormattedUser["RolAgenteAduana"] = true;
+                                }
+                                if (x.name === "customAttribute4"){
+                                    oFormattedUser["RolAgenteCarga"] = true;
+                                }
+                                if (x.name === "customAttribute5"){
+                                    oFormattedUser["RolCliente"] = true;
+                                }
+                            });
+                        }
         
                         if (oUser["groups"] !== undefined){
                             oFormattedUser["Grupos"] = oUser["groups"].filter(grupo =>{
-                                return grupo["display"].includes(that.appNamespace);
+                                return grupo["display"].includes(that.appNamespace + " -") && grupo["display"].includes("- " + that.ambiente); 
                             });
                         }
         
@@ -173,6 +191,37 @@ sap.ui.define([
                         aGroups.push(oFormattedGroup);
                     });
                     return aGroups;
+                },
+
+                handleTypeMissmatch: function(){
+                    MessageToast.show(this._getI18nText("msgErrorTypeMismatch"));
+                },
+
+                editCustomAttribute: function(oUser, idStat, sContent){
+                    let bCustomSchema = (oUser["urn:sap:cloud:scim:schemas:extension:custom:2.0:User"] === undefined) ? false : true;
+                    let oAtt = {
+                        "name" : "customAttribute" + idStat,
+                        "value": sContent
+                    };
+
+                    if (bCustomSchema){
+                        let aAttributes = oUser["urn:sap:cloud:scim:schemas:extension:custom:2.0:User"].attributes;
+                        if (sContent === ""){
+                            aAttributes.splice(aAttributes.indexOf(aAttributes.filter((x) =>{return x.name === "customAttribute" + idStat; })),1);
+                        }else{
+                            let oAttToEdit = aAttributes.find(x =>{return x.name === "customAttribute" + idStat; });
+                            if (oAttToEdit !== undefined){
+                                oAttToEdit.value = sContent;
+                            }else{
+                                aAttributes.push(oAtt);
+                            }
+                        }
+                    }else{
+                        oUser.schemas.push("urn:sap:cloud:scim:schemas:extension:custom:2.0:User");
+                        oUser["urn:sap:cloud:scim:schemas:extension:custom:2.0:User"] = {"attributes" : [oAtt]};
+                    }
+                    
+                    
                 }
 
         });

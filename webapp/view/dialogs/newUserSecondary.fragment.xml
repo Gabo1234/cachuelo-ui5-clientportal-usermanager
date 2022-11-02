@@ -63,6 +63,22 @@
 						<l:GridData span="XL1 L9 M9 S9" />
 					</layoutData>
                 </DatePicker>
+                <!--<Label text="{i18n>fileUploaderDNIFront}" />
+                <u:FileUploader placeholder="{i18n>phFileUploaderDNIFront}" 
+                    fileType="png,jpg"
+                    multiple="false"
+                    maximumFileSize="5" 
+                    change="handleUploadDNIFront"
+                    typeMissmatch="handleTypeMissmatch">    
+                </u:FileUploader>
+                <Label text="{i18n>fileUploaderDNIBack}" />
+                <u:FileUploader placeholder="{i18n>phFileUploaderDNIBack}" 
+                    fileType="png,jpg"
+                    multiple="false" 
+                    maximumFileSize="5"
+                    change="handleUploadDNIBack"
+                    typeMissmatch="handleTypeMissmatch">
+                </u:FileUploader> -->
 
                 <core:Title text="{i18n>titleDatosEmpresa}" />
                 <Label text="{i18n>inpNewUserRUC}" required="true"/>

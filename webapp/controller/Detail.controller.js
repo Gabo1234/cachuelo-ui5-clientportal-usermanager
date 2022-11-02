@@ -50,10 +50,23 @@ sap.ui.define(
 
             //Referencias principales
             that.oAppModel = this.getOwnerComponent().getModel();
-            that.appNamespace = "ClientPortal";
+
+            that.ambiente = "PRD";
+            
+          that.appNamespace = (that.ambiente === "QAS") ? "CLIENTPORTAL" : "PORTAL";
+          if (that.ambiente === "QAS"){
+            that.rolBaseId = "af492883-9776-4ff4-b1bc-cd8478e5f564";
+            that.rolAdmin = that.ambiente + "_" + (that.appNamespace).toUpperCase() + "_USERMANAGERADMIN";
+          }else if (that.ambiente === "PRD"){
+            that.rolBaseId = "c261303c-477d-4cea-a5db-88824f7491cc";
+            that.rolAdmin = that.ambiente + "_" + (that.appNamespace).toUpperCase() + "_ADMIN_PORTAL";
+          }
             //Creacion de modelos
             that.setModel(new JSONModel({}), "DetailModel");
             that.setModel(new JSONModel({}), "NewUserModel");
+            
+            that.getModel("DetailModel").setSizeLimit("2000");
+
             //Configuracion Model
             that.setModel(new JSONModel({}), "ConfigModel");
             that.setConfig();            
@@ -81,13 +94,33 @@ sap.ui.define(
 
                 sFilters = 'urn:ietf:params:scim:schemas:extension:enterprise:2.0:User:costCenter eq "' + that.getModel("DetailModel").getData()["UsuarioPrincipal"].Ruc + '"'
                 + ' and ' + 'urn:ietf:params:scim:schemas:extension:enterprise:2.0:User:division eq "Secundario"';
-                return iasService.readUsers(deployed, sFilters);
+                return iasService.readUsersWithPagination(deployed, sFilters);
             }).then(oResult =>{
-                if(oResult.Resources){
-                    that.getModel("DetailModel").getData()["UsuariosSecundarios"] = that.formatUsersArray(oResult.Resources);
-                    that.getModel("DetailModel").getData()["CantUsuariosSecundarios"] = oResult.totalResults;
-                    that.getModel("DetailModel").refresh(true);
+                //Aqui se deben diferenciar entre los ambientes
+                //Lectura de usuarios con esquema custom
+                let aUsers = [];
+                if (oResult.Resources !== undefined){
+                    oResult.Resources.filter( user => {
+                        return user["urn:sap:cloud:scim:schemas:extension:custom:2.0:User"]
+                    }).forEach( UserCustom =>{
+                        if (UserCustom["urn:sap:cloud:scim:schemas:extension:custom:2.0:User"]["attributes"].find(customAt =>{
+                            if (customAt.name === "customAttribute2" && customAt.value.includes(that.ambiente)){
+                                return customAt;
+                            }
+                        })){
+                            aUsers.push(UserCustom);
+                        }
+                    });
                 }
+                //Fin de lectura
+                if(aUsers.length > 0){
+                    that.getModel("DetailModel").getData()["UsuariosSecundarios"] = that.formatUsersArray(aUsers);
+                    that.getModel("DetailModel").getData()["CantUsuariosSecundarios"] = aUsers.length;
+                }else{
+                    that.getModel("DetailModel").getData()["UsuariosSecundarios"] = [];
+                    that.getModel("DetailModel").getData()["CantUsuariosSecundarios"] = 0;
+                }
+                that.getModel("DetailModel").refresh(true);
             }).finally(oFinal =>{
                 sap.ui.core.BusyIndicator.hide();
             }).catch(oError =>{
@@ -96,7 +129,8 @@ sap.ui.define(
 
             //Leer grupos de roles
             sap.ui.core.BusyIndicator.show();
-            sFilters = 'displayName co "' + that.appNamespace + '"'; //Filtro para DisplayNames
+            sFilters = 'urn:sap:cloud:scim:schemas:extension:custom:2.0:Group:name co "' + that.ambiente + "_" + that.appNamespace + '"'; //Filtro para Names
+            //sFilters = 'displayName co "' + that.appNamespace + '"'; //Filtro para DisplayNames
             iasService.readGroups(deployed, sFilters).then(oResult =>{
                 that.getModel("DetailModel").getData()["Groups"] = that.formatGroupsArray(oResult.Resources);
                 that.getModel("DetailModel").refresh(true);
@@ -113,13 +147,14 @@ sap.ui.define(
         onNavBack: function () {
             var oHistory = History.getInstance();
 			var sPreviousHash = oHistory.getPreviousHash();
+            var oRouter = sap.ui.core.UIComponent.getRouterFor(that);
 
 			if (sPreviousHash !== undefined) {
 				window.history.go(-1);
-			} else {
-				var oRouter = sap.ui.core.UIComponent.getRouterFor(this);
-				oRouter.navTo("RouteMain", true);
-			}
+			} 
+				
+            oRouter.navTo("RouteMain", true);
+			
         },
         
         
@@ -146,7 +181,8 @@ sap.ui.define(
                 this.byId("idBtnEditSecondaryUser").setEnabled(false);
                 this.byId("idBtnAssignRolesSecondaryUser").setEnabled(false); 
                 this.byId("idBtnBlockSecondaryUser").setEnabled(false); 
-                 
+                this.byId("idBtnUploadDocument").setEnabled(false); 
+
                 
                 that.getModel("DetailModel").getData()["UsuarioActual"] = null;
                 that.getModel("DetailModel").refresh(true);                
@@ -155,6 +191,8 @@ sap.ui.define(
                 this.byId("idBtnEditSecondaryUser").setEnabled(true); 
                 this.byId("idBtnAssignRolesSecondaryUser").setEnabled(true);  
                 this.byId("idBtnBlockSecondaryUser").setEnabled(true); 
+                this.byId("idBtnUploadDocument").setEnabled(true); 
+
     
                 
                 that.getModel("DetailModel").getData()["UsuarioActual"] = this.byId("idUserTableDetail")._getContexts()[oEvent.getSource().getSelectedIndex()].getObject();
@@ -175,13 +213,38 @@ sap.ui.define(
         },
         onSaveMainUser: function(){
             let oUserEdited = that.getModel("DetailModel").getData()["UsuarioPrincipal"], sFilters;
+            let oUserObject;
             sFilters = 'emails.value eq "' + oUserEdited.Correo + '"';
 
-            iasService.readUsers(deployed, sFilters).then(oResult => {
-                oResult.Resources[0].name.familyName = oUserEdited.Apellidos;
-                oResult.Resources[0].name.givenName = oUserEdited.Nombres;
-                oResult.Resources[0].phoneNumbers[0].value = oUserEdited.Telefono;
-                oResult.Resources[0]["urn:ietf:params:scim:schemas:extension:sap:2.0:User"].validTo = formatter.dateToZDate(oUserEdited.Vigencia);
+            iasService.readUsersWithPagination(deployed, sFilters).then(oResult => {
+                oUserObject = oResult.Resources[0];
+                oUserObject.name.familyName = oUserEdited.Apellidos;
+                oUserObject.name.givenName = oUserEdited.Nombres;
+                oUserObject.phoneNumbers[0].value = oUserEdited.Telefono;
+                oUserObject["urn:ietf:params:scim:schemas:extension:sap:2.0:User"].validTo = formatter.dateToZDate(oUserEdited.Vigencia);
+
+
+                if (oUserEdited.hasOwnProperty("RolAgenteAduana")){
+                    if (oUserEdited["RolAgenteAduana"]){
+                        that.editCustomAttribute(oUserObject, 3, "AgenteAduanas");
+                    } else {
+                        that.editCustomAttribute(oUserObject, 3, "");
+                    }
+                }
+                if (oUserEdited.hasOwnProperty("RolAgenteCarga")){
+                    if (oUserEdited["RolAgenteCarga"]){
+                        that.editCustomAttribute(oUserObject, 4, "AgenteCarga");
+                    }else{
+                        that.editCustomAttribute(oUserObject, 4, "");
+                    }
+                }
+                if (oUserEdited.hasOwnProperty("RolCliente")){
+                    if (oUserEdited["RolCliente"]){
+                        that.editCustomAttribute(oUserObject, 5, "Cliente");
+                    }else{
+                        that.editCustomAttribute(oUserObject, 5, "");
+                    }
+                }
 
                 return iasService.updateByPutUser(deployed,oResult.Resources[0], oUserEdited.UserId);
             }).then(oResult =>{
@@ -201,14 +264,37 @@ sap.ui.define(
                 console.log(oError);
             });
         },
-        onAssignRoles: function(){
+        onAssignRoles: async function(){
+            let oUserIas, oUsuarioActual;
+            oUsuarioActual = that.getModel("DetailModel").getData().UsuarioActual;
+
+            sap.ui.core.BusyIndicator.show();
+            oUserIas = await iasService.readSingleUser(deployed, oUsuarioActual.UserId);
+                if (that.ambiente === "QAS") {
+                    oUsuarioActual.Grupos = oUserIas.groups.filter((x) => {
+                        return x.display.includes("ClientPortal") && x.display.includes("DEV/QAS");
+                    });
+                } else if (that.ambiente === "PRD") {
+                    oUsuarioActual.Grupos = oUserIas.groups.filter((x) => {
+                        return x.display.includes("ClientPortal") && x.display.includes("PRD");
+                    });
+                }
+                that.getModel("DetailModel").getData().tempGroups = that.getModel("DetailModel").getData().Groups.filter(x => {return !oUsuarioActual.Grupos.find(y => {return y.value === x.GroupId;});});
+
+                that.getModel("DetailModel").refresh(true);
+                sap.ui.core.BusyIndicator.hide();
+
             that._openDialogDinamic("assignRolesSecondary");
             that["oassignRolesSecondary"].setModel(that.getModel("DetailModel")); 
+
+
             
         },
         onCreateSecondaryUser: function(){
             this._openDialogDinamic("newUser");
-            this.getModel("NewUserModel").setData({});
+            this.getModel("NewUserModel").setData({
+                "ExpiracyDate": new Date(new Date().setFullYear(new Date().getFullYear() + 1))
+            });
 
             //Setear campos heredados
             this.getModel("NewUserModel").getData().Ruc = this.getModel("DetailModel").getData()["UsuarioPrincipal"].Ruc;
@@ -271,10 +357,32 @@ sap.ui.define(
                             
                             sFilters = 'urn:ietf:params:scim:schemas:extension:enterprise:2.0:User:costCenter eq "' + that.getModel("DetailModel").getData()["UsuarioPrincipal"].Ruc + '"'
                             + ' and ' + 'urn:ietf:params:scim:schemas:extension:enterprise:2.0:User:division eq "Secundario"';
-                            return iasService.readUsers(deployed, sFilters); 
+                            return iasService.readUsersWithPagination(deployed, sFilters); 
                         }).then(oResult =>{
-                            that.getModel("DetailModel").getData()["UsuariosSecundarios"] = that.formatUsersArray(oResult.Resources);
-                            that.getModel("DetailModel").getData()["CantUsuariosSecundarios"] = oResult.totalResults;
+                            //Aqui se deben diferenciar entre los ambientes
+                            //Lectura de usuarios con esquema custom
+                            let aUsers = [];
+                            if (oResult.Resources !== undefined){
+                                oResult.Resources.filter( user => {
+                                    return user["urn:sap:cloud:scim:schemas:extension:custom:2.0:User"]
+                                }).forEach( UserCustom =>{
+                                    if (UserCustom["urn:sap:cloud:scim:schemas:extension:custom:2.0:User"]["attributes"].find(customAt =>{
+                                        if (customAt.name === "customAttribute2" && customAt.value.includes(that.ambiente)){
+                                            return customAt;
+                                        }
+                                    })){
+                                        aUsers.push(UserCustom);
+                                    }
+                                });
+                            }
+                            //Fin de lectura
+                            if(aUsers.length > 0){
+                                that.getModel("DetailModel").getData()["UsuariosSecundarios"] = that.formatUsersArray(aUsers);
+                                that.getModel("DetailModel").getData()["CantUsuariosSecundarios"] = aUsers.length;
+                            }else{
+                                that.getModel("DetailModel").getData()["UsuariosSecundarios"] = [];
+                                that.getModel("DetailModel").getData()["CantUsuariosSecundarios"] = 0;
+                            }
                             that.getModel("DetailModel").refresh(true);
                         }).finally(oFinal =>{
                             sap.ui.core.BusyIndicator.hide();
@@ -320,22 +428,53 @@ sap.ui.define(
                 let oUserObject = that.getUserObject(oUserForm, "Secundario"), sFilters;
                 sap.ui.core.BusyIndicator.show();
                 sFilters = 'userName co "' + oUserObject.userName + '"'; //Buscar por displayName
-                iasService.readUsers(deployed, sFilters).then(oResult =>{
+                iasService.readUsersWithPagination(deployed, sFilters).then(oResult =>{
                     oUserObject.userName += String(oResult.totalResults + 1).padStart(3,0);
                     oUserObject.displayName += String(oResult.totalResults + 1).padStart(3,0);
+                    
                     return iasService.createUser(deployed, oUserObject);
+                }).then(oResult =>{
+                    //Agregar rol a usuario creado
+                    let oGroup = that.actionUserToRoleGroup("add", oResult);
+                    oGroup.Operations[0].value[0].value = oResult.id;
+
+                    return iasService.updateByPatchGroup(deployed, oGroup, that.rolBaseId);
                 }).then(oResult =>{
                     MessageToast.show(this._getI18nText("msgOnSuccessCreateUser"));
 
                     sFilters = 'urn:ietf:params:scim:schemas:extension:enterprise:2.0:User:costCenter eq "' + that.getModel("DetailModel").getData()["UsuarioPrincipal"].Ruc + '"'
                 + ' and ' + 'urn:ietf:params:scim:schemas:extension:enterprise:2.0:User:division eq "Secundario"';
-                return iasService.readUsers(deployed, sFilters);
+                return iasService.readUsersWithPagination(deployed, sFilters);
                 }).then(oResult =>{
-                    that.getModel("DetailModel").getData()["UsuariosSecundarios"] = that.formatUsersArray(oResult.Resources);
-                that.getModel("DetailModel").getData()["CantUsuariosSecundarios"] = oResult.totalResults;
-                that.getModel("DetailModel").refresh(true);
+                    //Aqui se deben diferenciar entre los ambientes
+                    //Lectura de usuarios con esquema custom
+                    let aUsers = [];
+                    if (oResult.Resources !== undefined){
+                        oResult.Resources.filter( user => {
+                            return user["urn:sap:cloud:scim:schemas:extension:custom:2.0:User"]
+                        }).forEach( UserCustom =>{
+                            if (UserCustom["urn:sap:cloud:scim:schemas:extension:custom:2.0:User"]["attributes"].find(customAt =>{
+                                if (customAt.name === "customAttribute2" && customAt.value.includes(that.ambiente)){
+                                    return customAt;
+                                }
+                            })){
+                                aUsers.push(UserCustom);
+                            }
+                        });
+                    }
+                    //Fin de lectura
+                    if(aUsers.length > 0){
+                        that.getModel("DetailModel").getData()["UsuariosSecundarios"] = that.formatUsersArray(aUsers);
+                        that.getModel("DetailModel").getData()["CantUsuariosSecundarios"] = aUsers.length;
+                    }else{
+                        that.getModel("DetailModel").getData()["UsuariosSecundarios"] = [];
+                        that.getModel("DetailModel").getData()["CantUsuariosSecundarios"] = 0;
+                    }
+                    that.getModel("DetailModel").refresh(true);
                 }).catch(oError =>{
-                    MessageBox.error(oError);
+                    if (oError.status === 409){
+                        MessageBox.error(this._getI18nText("msgOnErrorCreateUserUniqueness"));
+                    }
                 }).finally(oFinal =>{
                     sap.ui.core.BusyIndicator.hide();
                     oDialog.close();
@@ -370,7 +509,7 @@ sap.ui.define(
                 sap.ui.core.BusyIndicator.show();
 
                 sFilters = 'emails.value eq "' + oUserBefore.Correo + '"';
-                iasService.readUsers(deployed, sFilters).then(oResult =>{
+                iasService.readUsersWithPagination(deployed, sFilters).then(oResult =>{
                     oUserObject["userName"] = oResult.Resources[0].userName;
                     oUserObject["displayName"] = oResult.Resources[0].displayName;
                     oUserObject["active"] = oUserBefore["Status"];
@@ -380,11 +519,33 @@ sap.ui.define(
 
                     sFilters = 'urn:ietf:params:scim:schemas:extension:enterprise:2.0:User:costCenter eq "' + that.getModel("DetailModel").getData()["UsuarioPrincipal"].Ruc + '"'
                 + ' and ' + 'urn:ietf:params:scim:schemas:extension:enterprise:2.0:User:division eq "Secundario"';
-                return iasService.readUsers(deployed, sFilters);
+                return iasService.readUsersWithPagination(deployed, sFilters);
                 }).then(oResult =>{
-                    that.getModel("DetailModel").getData()["UsuariosSecundarios"] = that.formatUsersArray(oResult.Resources);
-                that.getModel("DetailModel").getData()["CantUsuariosSecundarios"] = oResult.totalResults;
-                that.getModel("DetailModel").refresh(true);
+                    //Aqui se deben diferenciar entre los ambientes
+                    //Lectura de usuarios con esquema custom
+                    let aUsers = [];
+                    if (oResult.Resources !== undefined){
+                        oResult.Resources.filter( user => {
+                            return user["urn:sap:cloud:scim:schemas:extension:custom:2.0:User"]
+                        }).forEach( UserCustom =>{
+                            if (UserCustom["urn:sap:cloud:scim:schemas:extension:custom:2.0:User"]["attributes"].find(customAt =>{
+                                if (customAt.name === "customAttribute2" && customAt.value.includes(that.ambiente)){
+                                    return customAt;
+                                }
+                            })){
+                                aUsers.push(UserCustom);
+                            }
+                        });
+                    }
+                    //Fin de lectura
+                    if(aUsers.length > 0){
+                        that.getModel("DetailModel").getData()["UsuariosSecundarios"] = that.formatUsersArray(aUsers);
+                        that.getModel("DetailModel").getData()["CantUsuariosSecundarios"] = aUsers.length;
+                    }else{
+                        that.getModel("DetailModel").getData()["UsuariosSecundarios"] = [];
+                        that.getModel("DetailModel").getData()["CantUsuariosSecundarios"] = 0;
+                    }
+                    that.getModel("DetailModel").refresh(true);
                 }).catch(oError =>{
                     MessageBox.error(oError);
                 }).finally(oFinal =>{
@@ -494,7 +655,8 @@ sap.ui.define(
             "schemas": [
                 "urn:ietf:params:scim:schemas:core:2.0:User",
                 "urn:ietf:params:scim:schemas:extension:enterprise:2.0:User",
-                "urn:ietf:params:scim:schemas:extension:sap:2.0:User"
+                "urn:ietf:params:scim:schemas:extension:sap:2.0:User",
+                "urn:sap:cloud:scim:schemas:extension:custom:2.0:User"
             ],
             "userName": formatter.getUserName(oUser.Name, oUser.LastName1 + oUser.LastName2),
             "name": {
@@ -525,81 +687,93 @@ sap.ui.define(
             "urn:ietf:params:scim:schemas:extension:sap:2.0:User": {
                 "validTo": formatter.dateToZDate(oUser.ExpiracyDate),
                 "sendMail": true
+              },
+              "urn:sap:cloud:scim:schemas:extension:custom:2.0:User":{
+                "attributes": [{
+                    name: "customAttribute2",
+                    value: that.ambiente
+                }]
               }
             }
             return oUserObject;
         },
-        onUnassignRoleToUser:function(oEvent){
-            //Reconocer el rol
-            let sPath1 = oEvent.getSource().getParent().getBindingContext("DetailModel").sPath.split("/")[1],
-                sPath2 = oEvent.getSource().getParent().getBindingContext("DetailModel").sPath.split("/")[2],
-                sIndex = oEvent.getSource().getParent().getBindingContext("DetailModel").sPath.split("/")[3];
-
-            let oRolSeleccionado = that.getModel("DetailModel").getData()[sPath1][sPath2][sIndex];
+        onUnassignRoleToUser: async function (oEvent) {
+            let oUpdatedGroup, oUser;
+            let oRolSeleccionado = oEvent.getSource().getParent().getBindingContext("DetailModel").getObject();
 
             //Comprobar que se repita el mismo rol
 
             let oUsuarioActual = that.getModel("DetailModel").getData()["UsuarioActual"];
             let oGroup = that.actionUserToRoleGroup("remove", oUsuarioActual);
+
             sap.ui.core.BusyIndicator.show();
+            oUpdatedGroup = await iasService.updateByPatchGroup(deployed, oGroup, oRolSeleccionado.value);
 
-            let sFilters;
-            iasService.updateByPatchGroup(deployed, oGroup, oRolSeleccionado.value).then((oResult) => {
-                MessageToast.show(that._getI18nText("msgOnSuccessUnassignedRole"));
-                //Obtener los roles del nuevo usuario
-                sFilters = 'emails.value eq "' + oUsuarioActual.Correo + '"';
-                return iasService.readUsers(deployed,sFilters);
-            }).then(oResult =>{
-                that.getModel("DetailModel").getData()["UsuarioActual"] = that.formatUsersArray(oResult.Resources)[0];
-                that.getModel("DetailModel").refresh(true);
-            }).finally((oFinal) => {
-                sap.ui.core.BusyIndicator.hide();
-            }).catch((oError) => {
-                console.log(oError);
-            });
+            oUser = await iasService.readSingleUser(deployed, oUsuarioActual.UserId);
+
+            if (that.ambiente === "QAS") {
+                oUsuarioActual.Grupos = oUser.groups.filter((x) => {
+                    return x.display.includes("ClientPortal") && x.display.includes("DEV/QAS");
+                });
+            } else if (that.ambiente === "PRD") {
+                oUsuarioActual.Grupos = oUser.groups.filter((x) => {
+                    return x.display.includes("ClientPortal") && x.display.includes("PRD");
+                });
+            }
+
+            that.getModel("DetailModel").getData().tempGroups = that.getModel("DetailModel").getData().Groups.filter(x => {return !oUsuarioActual.Grupos.find(y => {return y.value === x.GroupId;});});
+
+            that.getModel("DetailModel").refresh(true);
+            sap.ui.core.BusyIndicator.hide();
+            MessageToast.show(that._getI18nText("msgOnSuccessUnassignedRole"));
         },
-        onAssignRoleToUser:function(oEvent){
-            let sPath = oEvent.getSource().getParent().getBindingContext("DetailModel").sPath.split("/")[1],
-                sIndex = oEvent.getSource().getParent().getBindingContext("DetailModel").sPath.split("/")[2];
 
-            let oRolSeleccionado = that.getModel("DetailModel").getData()[sPath][sIndex];
+        onAssignRoleToUser: async function (oEvent) {
+            let oUpdatedGroup, oUser;
+            let oRolSeleccionado = oEvent.getSource().getParent().getBindingContext("DetailModel").getObject();
             let oRolesUsuarioActual = that.getModel("DetailModel").getData()["UsuarioActual"]["Grupos"];
-
-            if (oRolesUsuarioActual === undefined){
+            if (oRolesUsuarioActual === undefined) {
                 oRolesUsuarioActual = [];
             }
 
             //Comprobar que no se repita el mismo rol
-
-            let oRolRepetido = oRolesUsuarioActual.find(rol => {
+            let oRolRepetido = oRolesUsuarioActual.find((rol) => {
                 return rol.value === oRolSeleccionado.GroupId;
             });
 
             if (oRolRepetido) {
                 MessageBox.error(that._getI18nText("msgOnDuplicatedRole"));
-            }else{
-                let oUsuarioActual = that.getModel("DetailModel").getData()["UsuarioActual"];
-                let oGroup = that.actionUserToRoleGroup("add", oUsuarioActual);
-                sap.ui.core.BusyIndicator.show();
+                return true;
+            }
 
-                let sFilters;
-                iasService.updateByPatchGroup(deployed, oGroup, oRolSeleccionado.GroupId).then((oResult) => {
-                    MessageToast.show(that._getI18nText("msgOnSuccessAssignedRole"));
-                    //Obtener los roles del nuevo usuario
-                    sFilters = 'emails.value eq "' + oUsuarioActual.Correo + '"';
-                    return iasService.readUsers(deployed,sFilters);
-                }).then(oResult =>{
-                    that.getModel("DetailModel").getData()["UsuarioActual"] = that.formatUsersArray(oResult.Resources)[0];
-                    that.getModel("DetailModel").refresh(true);
-                }).finally((oFinal) => {
-                    sap.ui.core.BusyIndicator.hide();
-                }).catch((oError) => {
-                    console.log(oError);
+            let oUsuarioActual = that.getModel("DetailModel").getData()["UsuarioActual"];
+
+            let oGroup = that.actionUserToRoleGroup("add", oUsuarioActual);
+
+            sap.ui.core.BusyIndicator.show();
+
+            oUpdatedGroup = await iasService.updateByPatchGroup(deployed, oGroup, oRolSeleccionado.GroupId);
+
+            //Obtener los roles del nuevo usuario
+            oUser = await iasService.readSingleUser(deployed, oUsuarioActual.UserId);
+
+            if (that.ambiente === "QAS") {
+                oUsuarioActual.Grupos = oUser.groups.filter((x) => {
+                    return x.display.includes("ClientPortal") && x.display.includes("DEV/QAS");
+                });
+            } else if (that.ambiente === "PRD") {
+                oUsuarioActual.Grupos = oUser.groups.filter((x) => {
+                    return x.display.includes("ClientPortal") && x.display.includes("PRD");
                 });
             }
 
+            that.getModel("DetailModel").getData().tempGroups = that.getModel("DetailModel").getData().Groups.filter(x => {return !oUsuarioActual.Grupos.find(y => {return y.value === x.GroupId;});});
 
+            that.getModel("DetailModel").refresh(true);
+            sap.ui.core.BusyIndicator.hide();
+            MessageToast.show(that._getI18nText("msgOnSuccessAssignedRole"));
         },
+
         actionUserToRoleGroup: function(sAction, oUser){
             let oIasGroup = {
                 "schemas": [
@@ -639,16 +813,38 @@ sap.ui.define(
 					if(sAction === "Modificar usuario"){
                         sap.ui.core.BusyIndicator.show();
                         sFilters = 'emails.value eq "' + oUsuarioActual.Correo + '"';
-                        iasService.readUsers(deployed, sFilters).then(oResult =>{
+                        iasService.readUsersWithPagination(deployed, sFilters).then(oResult =>{
                             oResult.Resources[0].active = !oResult.Resources[0].active;
                             return iasService.updateByPutUser(deployed, oResult.Resources[0], oUsuarioActual["UserId"]);
                         }).then(oResult =>{
                             sFilters = 'urn:ietf:params:scim:schemas:extension:enterprise:2.0:User:costCenter eq "' + that.getModel("DetailModel").getData()["UsuarioPrincipal"].Ruc + '"'
                             + ' and ' + 'urn:ietf:params:scim:schemas:extension:enterprise:2.0:User:division eq "Secundario"';
-                            return iasService.readUsers(deployed, sFilters); 
+                            return iasService.readUsersWithPagination(deployed, sFilters); 
                         }).then(oResult =>{
-                            that.getModel("DetailModel").getData()["UsuariosSecundarios"] = that.formatUsersArray(oResult.Resources);
-                            that.getModel("DetailModel").getData()["CantUsuariosSecundarios"] = oResult.totalResults;
+                            //Aqui se deben diferenciar entre los ambientes
+                            //Lectura de usuarios con esquema custom
+                            let aUsers = [];
+                            if (oResult.Resources !== undefined){
+                                oResult.Resources.filter( user => {
+                                    return user["urn:sap:cloud:scim:schemas:extension:custom:2.0:User"]
+                                }).forEach( UserCustom =>{
+                                    if (UserCustom["urn:sap:cloud:scim:schemas:extension:custom:2.0:User"]["attributes"].find(customAt =>{
+                                        if (customAt.name === "customAttribute2" && customAt.value.includes(that.ambiente)){
+                                            return customAt;
+                                        }
+                                    })){
+                                        aUsers.push(UserCustom);
+                                    }
+                                });
+                            }
+                            //Fin de lectura
+                            if(aUsers.length > 0){
+                                that.getModel("DetailModel").getData()["UsuariosSecundarios"] = that.formatUsersArray(aUsers);
+                                that.getModel("DetailModel").getData()["CantUsuariosSecundarios"] = aUsers.length;
+                            }else{
+                                that.getModel("DetailModel").getData()["UsuariosSecundarios"] = [];
+                                that.getModel("DetailModel").getData()["CantUsuariosSecundarios"] = 0;
+                            }
                             that.getModel("DetailModel").refresh(true);
                         }).finally(oFinal =>{
                             sap.ui.core.BusyIndicator.hide();
@@ -712,6 +908,170 @@ sap.ui.define(
                     width: "10",
 					type: EdmType.String
 				}];
+        },
+
+        handleUploadDNIFront: function(oEvent){
+            let aFiles=oEvent.getParameters().files;
+            let currentFile = aFiles[0];
+
+            if (currentFile) {
+                var reader = new FileReader();
+                reader.onload = function(readerEvt) {
+                    var binaryString = readerEvt.target.result;
+                    that.getModel("UploadModel").getData().FrontDNI = btoa(binaryString);
+                };
+                reader.readAsBinaryString(currentFile);
+            }
+        },
+
+        handleUploadDNIBack: function(oEvent){
+            let aFiles=oEvent.getParameters().files;
+            let currentFile = aFiles[0];
+
+            if (currentFile) {
+                var reader = new FileReader();
+        
+                reader.onload = function(readerEvt) {
+                    var binaryString = readerEvt.target.result;
+                    that.getModel("UploadModel").getData().BackDNI = btoa(binaryString);
+                };
+        
+                 reader.readAsBinaryString(currentFile);
+            }
+        },
+        handleActionUploadDNI: function(oEvent){
+            let oObject = that.getModel("DetailModel").getData()["UsuarioActual"];
+            that.setModel(new JSONModel({"id": oObject.UserId, "email": oObject.Correo, "frontDNI": "", "backDNI":""}), "UploadModel");
+
+
+            sap.ui.core.BusyIndicator.show();
+            let sFilters = 'emails.value eq "' + oObject.Correo + '"';
+            iasService.readUsersWithPagination(deployed, sFilters).then(oResult =>{
+                let aCamposCustom = oResult.Resources[0]["urn:sap:cloud:scim:schemas:extension:custom:2.0:User"].attributes;
+                let aPromise = [];
+                let camposDNI = aCamposCustom.find(x=>{return x.name === "customAttribute10"});
+                if( camposDNI !== undefined){
+                    camposDNI = JSON.parse(camposDNI.value);
+                    that.getModel("UploadModel").getData().bDNI = true;
+
+                    aPromise.push(that.getDocumentFromDS(camposDNI.front));
+                    aPromise.push(that.getDocumentFromDS(camposDNI.back));
+
+                    Promise.all(aPromise).then(aResults =>{
+                        that.getModel("UploadModel").getData().DNIAnverso = aResults[0];
+                        that.getModel("UploadModel").getData().DNIReverso = aResults[1];
+                        that.getModel("UploadModel").refresh(true);
+                    });
+
+                }else{
+                    let sDefaultImage = sap.ui.require.toUrl(
+                        "clientportal/saasa/com/pe/usermanager/assets/NotFound.jpg"
+                    );
+                    that.getModel("UploadModel").getData().bDNI = false;
+
+                    that.getModel("UploadModel").getData().DNIAnverso = sDefaultImage;
+                    that.getModel("UploadModel").getData().DNIReverso = sDefaultImage;
+
+                }
+                console.log(oResult);
+            }).catch(oError =>{
+                console.log(oError);
+            }).finally(() =>{
+                sap.ui.core.BusyIndicator.hide();
+                that.getModel("UploadModel").refresh(true);
+                this._openDialogDinamic("uploadDocument");
+                this["ouploadDocument"].setModel(that.getModel("UploadModel"));
+            });
+        },
+        uploadDNI: function(jsonDni){
+            try {
+                return new Promise(function (resolve, reject) {
+                let sPath = `${window.RootPath}/services/api/dms/uploadDNI`;
+                fetch(sPath, {
+                method: 'POST',
+                headers: {
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(jsonDni)
+                }).then(response => response.json()).then(data =>{
+                    resolve(data);
+                }).catch(error =>{
+                    reject(error);
+                });
+            });
+            } catch (oError) {
+                console.log(oError);
+            }
+        },
+        getDocumentFromDS: function(sId){
+            let sPath = `${window.RootPath}/services/api/DocumentServiceService?documentoId=` + sId;
+            return new Promise(function (resolve, reject) {
+                fetch(sPath, {
+                    method: 'GET'
+                }).then(oResult => oResult.arrayBuffer()).then(oResult =>{
+                    var blob = new Blob([oResult], {type: "image/jpeg"});
+                    
+                    // process to auto download it
+                    const fileURL = URL.createObjectURL(blob);
+                    resolve(fileURL);
+                }).catch(oError =>{
+                    reject(oError);
+                });
+            });
+        },
+  
+        onGetJsonDni: function(ambiente, idUsuario, dniFront, dniBack){
+            let oDni = { 
+                "Ambiente": ambiente,
+                "IdUsuario": idUsuario,
+                "DniFront": dniFront,
+                "DniBack": dniBack
+            };
+            return oDni;
+        },
+        onUploadDocument: function(oEvent){
+            let uploadModel = that.getModel("UploadModel").getData();
+            if ((uploadModel.FrontDNI === undefined || uploadModel.FrontDNI === "") || (uploadModel.BackDNI === undefined || uploadModel.BackDNI === "")){
+                MessageToast.show(that._getI18nText("msgOnErrorCompleteDocument"));
+            }else{
+                sap.ui.core.BusyIndicator.show();
+                let oObjetoUsuario;
+                iasService.readSingleUser(deployed, uploadModel.id).then(oResult =>{
+                    let bFlagExisteDocumento = (oResult["urn:sap:cloud:scim:schemas:extension:custom:2.0:User"].attributes.find(x =>{
+                        return x.name === "customAttribute10";
+                    }) === undefined ? false : true);
+
+                    /* if (bFlagExisteDocumento){
+                        MessageBox.error(that._getI18nText("msgOnErrorDocumentAlreadySubmitted"));
+                        return Promise.reject();
+                    } */
+                    
+                   let oBody = that.onGetJsonDni(that.ambiente, uploadModel.id, uploadModel.FrontDNI, uploadModel.BackDNI);
+                   oObjetoUsuario = oResult;
+                   
+                   return that.uploadDNI(oBody);
+                }).then(oResult =>{
+                    oObjetoUsuario["urn:sap:cloud:scim:schemas:extension:custom:2.0:User"].attributes.push({
+                        "name": "customAttribute10",
+                        "value": JSON.stringify({
+                            "front": oResult[0].documento.Id,
+                            "back": oResult[1].documento.Id
+                        })
+                    });
+                    
+                    return iasService.updateByPutUser(deployed, oObjetoUsuario, oObjetoUsuario.id);
+                }).then(oResult =>{
+                    MessageBox.success(that._getI18nText("msgOnSuccessDocument"));
+                }).catch(oError =>{
+                    console.log(oError);
+                }).finally(oFinal =>{
+                    sap.ui.core.BusyIndicator.hide();
+                    delete that.getModel("UploadModel").getData().FrontDNI;
+                    delete that.getModel("UploadModel").getData().BackDNI;
+                    this["ouploadDocument"].close();
+                });
+            }
         }
 
       }

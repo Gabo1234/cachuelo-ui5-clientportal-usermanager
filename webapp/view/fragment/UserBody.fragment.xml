@@ -8,7 +8,7 @@
 		id="idUserTable"
 		rows="{AppModel>/UsuariosPrincipales}"
 		selectionMode="None"
-		visibleRowCount="10"
+		visibleRowCount="15"
 		enableSelectAll="false"
 		ariaLabelledBy="title"
 	>
@@ -24,7 +24,14 @@
 					press="onOpenCreateUserDialog"
                     visible="{AppModel>/IsAdmin}" 
 				/>
-
+                <Button
+					icon="sap-icon://role"
+					tooltip="{i18n>btnEditarPerfil}"
+					type="Emphasized"
+					text="{i18n>btnEditarPerfil}"
+					press="onOpenEditUserProfile"
+                    visible="{AppModel>/IsAdmin}" 
+				/>
 			</OverflowToolbar>
 		</ui:extension>
 		<ui:columns>	

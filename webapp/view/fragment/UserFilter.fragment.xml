@@ -2,9 +2,9 @@
     xmlns:core="sap.ui.core"
     xmlns:f="sap.ui.layout.form"
     xmlns:fb="sap.ui.comp.filterbar"
+    xmlns:u="sap.ui.unified"
     xmlns:app="http://schemas.sap.com/sapui5/extension/sap.ui.core.CustomData/1">
     <fb:FilterBar
-        id="UserFilterBar" 
         header="Filtros" 
         reset="onRestoreFilters" 
         search="onSearch" 
@@ -14,7 +14,7 @@
         showRestoreOnFB="true" 
         showRestoreButton="false">
         <fb:filterGroupItems>
-        <fb:FilterGroupItem 
+            <fb:FilterGroupItem 
                 groupName="MANGROUP" 
                 name="A" 
                 label="{i18n>lblRazonSocial}" 
@@ -28,8 +28,8 @@
                         placeholder="{i18n>phlFilterRazonSocial}" 
                         type="Text" showValueHelp="false" visible="true" width="100%" valueHelpOnly="false"/>
                 </fb:control>
-        </fb:FilterGroupItem>
-        <fb:FilterGroupItem 
+            </fb:FilterGroupItem>
+            <fb:FilterGroupItem 
                 groupName="MANGROUP" 
                 name="B" 
                 label="{i18n>lblEstado}" 
@@ -47,8 +47,23 @@
                     </ComboBox>
                 </fb:control>
             </fb:FilterGroupItem>
-            
+            <fb:FilterGroupItem 
+                groupName="MANGROUP" 
+                name="C" 
+                label="{i18n>lblRUC}" 
+                partOfCurrentVariant="true" 
+                visibleInFilterBar="true">
+                <fb:control>
+                    <Input 
+                        app:controlType="Input"
+                        app:controlPath="Ruc"
+                        app:objectiveTable="UsuarioPrimario"  
+                        placeholder="{i18n>phlFilterRuc}" 
+                        type="Text" showValueHelp="false" visible="true" width="100%" valueHelpOnly="false"/>
+                </fb:control>
+            </fb:FilterGroupItem>
             
         </fb:filterGroupItems>
     </fb:FilterBar>
+
 </core:FragmentDefinition>

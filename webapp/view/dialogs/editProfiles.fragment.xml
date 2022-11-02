@@ -1,0 +1,21 @@
+<core:FragmentDefinition xmlns="sap.m"
+    xmlns:core="sap.ui.core">
+    <Dialog title="{i18n>selectDialogTitleProfile}">
+        <HBox alignItems="Center" class="sapUiTinyMargin">
+            <Label class="sapUiTinyMarginEnd" text="Tipo de operación: " />
+            <Select selectedKey="{AppModel>/TipoOperacion}" required="true">
+                <core:Item key="Add" text="Agregar roles"/>
+                <core:Item key="Del" text="Remover roles"/>
+            </Select>
+        </HBox>
+        
+        <List itemPress="onConfirmRoleToEdit">
+            <StandardListItem title="{i18n>roleAgtAduana}" description="N° de usuarios principales: {AppModel>/nAgtAduana}" icon="sap-icon://suitcase" iconDensityAware="false" iconInset="false" type="Active" />
+            <StandardListItem title="{i18n>roleAgtCarga}" description="N° de usuarios: {AppModel>/nAgtCarga}" icon="sap-icon://supplier" iconDensityAware="false" iconInset="false" type="Active" />
+            <StandardListItem title="{i18n>roleCliente}" description="N° de usuarios: {AppModel>/nClientes}" icon="sap-icon://person-placeholder" iconDensityAware="false" iconInset="false" type="Active" />
+        </List>
+        <beginButton>
+            <Button type="Reject" text="{i18n>btnCerrar}" press="onCloseDialog" />
+        </beginButton>
+    </Dialog>
+</core:FragmentDefinition>

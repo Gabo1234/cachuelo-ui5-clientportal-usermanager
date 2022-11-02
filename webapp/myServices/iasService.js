@@ -11,10 +11,10 @@ sap.ui.define(["sap/ui/model/json/JSONModel"], function (JSONModel) {
     readUsers: function (deployed, sFilters="") {
         try {
             let sRoute = this.getRoute(deployed);
-            let filters = (sFilters==="")?"":"?filter=" + sFilters;
+            let filters = (sFilters==="")?"":"&filter=" + sFilters;
             return new Promise(function (resolve, reject) {
                 $.ajax({
-                    "url": sRoute + "/Users" + filters,
+                    "url": sRoute + "/Users?startId=initial"+ filters,
                     "type": 'GET',
                     success: (resp) => {
                         resolve(resp);
@@ -24,6 +24,53 @@ sap.ui.define(["sap/ui/model/json/JSONModel"], function (JSONModel) {
                     }
                 })
             });
+        } catch (oError) {
+            console.log(oError);
+        }
+    },                                                                          
+    auxReadUsers: function (deployed, sFilters="", sPaginationId="") {
+        try {
+            let sRoute = this.getRoute(deployed);
+            let filters = (sFilters==="")?"":"&filter=" + sFilters;
+            return new Promise(function (resolve, reject) {
+                $.ajax({
+                    "url": sRoute + "/Users?startId=" + sPaginationId + filters,
+                    "type": 'GET',
+                    success: (resp) => {
+                        resolve(resp);
+                    },
+                    error: (err) => {
+                        reject(err);
+                    }
+                })
+            });
+        } catch (oError) {
+            console.log(oError);
+        }
+    },
+    readUsersWithPagination: async function (deployed, sFilters="") {
+        try {
+            let bEnd = false;
+            let oBatch, aUsuarios = [], nextId = "initial"; 
+            while (!bEnd){
+                oBatch = await this.auxReadUsers(deployed,sFilters, nextId);
+                if (oBatch.nextId !== "end"){
+                    nextId = oBatch.nextId;
+                }else {
+                    bEnd = true;
+                }
+                aUsuarios.push(oBatch);
+            }
+            let aAux = [], oAux = {};
+            aUsuarios.forEach(x => {
+                if (aAux.length !== 0) {
+                    aAux = aAux.concat(x.Resources);
+                }else{
+                    aAux = x.Resources;
+                }
+            });
+            oAux = {Resources: (aAux === undefined) ? [] : aAux, totalResults: (aAux === undefined) ? 0 : aAux.length};
+            return oAux;
         } catch (oError) {
             console.log(oError);
         }
@@ -51,10 +98,10 @@ sap.ui.define(["sap/ui/model/json/JSONModel"], function (JSONModel) {
     readGroups: function(deployed, sFilters=""){
         try {
             let sRoute = this.getRoute(deployed);
-            let filters = (sFilters==="")?"":"?filter=" + sFilters;
+            let filters = (sFilters==="")?"":"&filter=" + sFilters;
             return new Promise(function (resolve, reject) {
                 $.ajax({
-                    "url": sRoute + "/Groups" + filters,
+                    "url": sRoute + "/Groups?count=500" + filters,
                     "type": 'GET',
                     success: (resp) => {
                         resolve(resp);
@@ -110,7 +157,6 @@ sap.ui.define(["sap/ui/model/json/JSONModel"], function (JSONModel) {
             console.log(oError);
         }
     },
-
     updateByPatchUser: function (deployed, oUserObject, sUser=""){
         try {
             let sRoute = this.getRoute(deployed);

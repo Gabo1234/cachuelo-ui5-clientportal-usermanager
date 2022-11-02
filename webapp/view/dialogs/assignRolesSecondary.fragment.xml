@@ -8,7 +8,7 @@
 	<content>
     <VBox >
     <ui:Table
-		rows="{DetailModel>/Groups}"
+		rows="{DetailModel>/tempGroups}"
 		selectionMode="None"
 		visibleRowCount="10"
 		enableSelectAll="false"
