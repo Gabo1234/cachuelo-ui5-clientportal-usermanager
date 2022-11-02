@@ -51,7 +51,7 @@ sap.ui.define(
             //Referencias principales
             that.oAppModel = this.getOwnerComponent().getModel();
 
-            that.ambiente = "QAS";
+            that.ambiente = "PRD";
             
           that.appNamespace = (that.ambiente === "QAS") ? "CLIENTPORTAL" : "PORTAL";
           if (that.ambiente === "QAS"){
@@ -264,9 +264,30 @@ sap.ui.define(
                 console.log(oError);
             });
         },
-        onAssignRoles: function(){
+        onAssignRoles: async function(){
+            let oUserIas, oUsuarioActual;
+            oUsuarioActual = that.getModel("DetailModel").getData().UsuarioActual;
+
+            sap.ui.core.BusyIndicator.show();
+            oUserIas = await iasService.readSingleUser(deployed, oUsuarioActual.UserId);
+                if (that.ambiente === "QAS") {
+                    oUsuarioActual.Grupos = oUserIas.groups.filter((x) => {
+                        return x.display.includes("ClientPortal") && x.display.includes("DEV/QAS");
+                    });
+                } else if (that.ambiente === "PRD") {
+                    oUsuarioActual.Grupos = oUserIas.groups.filter((x) => {
+                        return x.display.includes("ClientPortal") && x.display.includes("PRD");
+                    });
+                }
+                that.getModel("DetailModel").getData().tempGroups = that.getModel("DetailModel").getData().Groups.filter(x => {return !oUsuarioActual.Grupos.find(y => {return y.value === x.GroupId;});});
+
+                that.getModel("DetailModel").refresh(true);
+                sap.ui.core.BusyIndicator.hide();
+
             that._openDialogDinamic("assignRolesSecondary");
             that["oassignRolesSecondary"].setModel(that.getModel("DetailModel")); 
+
+
             
         },
         onCreateSecondaryUser: function(){
@@ -653,92 +674,83 @@ sap.ui.define(
             }
             return oUserObject;
         },
-        onUnassignRoleToUser:function(oEvent){
-            //Reconocer el rol
-            let sPath1 = oEvent.getSource().getParent().getBindingContext("DetailModel").sPath.split("/")[1],
-                sPath2 = oEvent.getSource().getParent().getBindingContext("DetailModel").sPath.split("/")[2],
-                sIndex = oEvent.getSource().getParent().getBindingContext("DetailModel").sPath.split("/")[3];
-
-            let oRolSeleccionado = that.getModel("DetailModel").getData()[sPath1][sPath2][sIndex];
+        onUnassignRoleToUser: async function (oEvent) {
+            let oUpdatedGroup, oUser;
+            let oRolSeleccionado = oEvent.getSource().getParent().getBindingContext("DetailModel").getObject();
 
             //Comprobar que se repita el mismo rol
 
             let oUsuarioActual = that.getModel("DetailModel").getData()["UsuarioActual"];
             let oGroup = that.actionUserToRoleGroup("remove", oUsuarioActual);
+
             sap.ui.core.BusyIndicator.show();
+            oUpdatedGroup = await iasService.updateByPatchGroup(deployed, oGroup, oRolSeleccionado.value);
 
-            let sFilters;
-            iasService.updateByPatchGroup(deployed, oGroup, oRolSeleccionado.value).then((oResult) => {
-                MessageToast.show(that._getI18nText("msgOnSuccessUnassignedRole"));
-                //Obtener los roles del nuevo usuario
-                sFilters = 'emails.value eq "' + oUsuarioActual.Correo + '"';
-                return iasService.readUsersWithPagination(deployed,sFilters);
-            }).then(oResult =>{
-                let oEditedUser = that.formatUsersArray(oResult.Resources)[0];
-                that.getModel("DetailModel").getData()["UsuarioActual"] = oEditedUser;
+            oUser = await iasService.readSingleUser(deployed, oUsuarioActual.UserId);
 
-                let iIndex = that.getModel("DetailModel").getData()["UsuariosSecundarios"].findIndex(x=>{
-                    return x.UserId === oEditedUser.UserId;
+            if (that.ambiente === "QAS") {
+                oUsuarioActual.Grupos = oUser.groups.filter((x) => {
+                    return x.display.includes("ClientPortal") && x.display.includes("DEV/QAS");
                 });
+            } else if (that.ambiente === "PRD") {
+                oUsuarioActual.Grupos = oUser.groups.filter((x) => {
+                    return x.display.includes("ClientPortal") && x.display.includes("PRD");
+                });
+            }
 
-                that.getModel("DetailModel").getData()["UsuariosSecundarios"].splice(iIndex, 1, oEditedUser);                         that.getModel("DetailModel").refresh(true);
-            }).finally((oFinal) => {
-                sap.ui.core.BusyIndicator.hide();
-            }).catch((oError) => {
-                console.log(oError);
-            });
+            that.getModel("DetailModel").getData().tempGroups = that.getModel("DetailModel").getData().Groups.filter(x => {return !oUsuarioActual.Grupos.find(y => {return y.value === x.GroupId;});});
+
+            that.getModel("DetailModel").refresh(true);
+            sap.ui.core.BusyIndicator.hide();
+            MessageToast.show(that._getI18nText("msgOnSuccessUnassignedRole"));
         },
-        onAssignRoleToUser:function(oEvent){
-            let sPath = oEvent.getSource().getParent().getBindingContext("DetailModel").sPath.split("/")[1],
-                sIndex = oEvent.getSource().getParent().getBindingContext("DetailModel").sPath.split("/")[2];
 
-            let oRolSeleccionado = that.getModel("DetailModel").getData()[sPath][sIndex];
+        onAssignRoleToUser: async function (oEvent) {
+            let oUpdatedGroup, oUser;
+            let oRolSeleccionado = oEvent.getSource().getParent().getBindingContext("DetailModel").getObject();
             let oRolesUsuarioActual = that.getModel("DetailModel").getData()["UsuarioActual"]["Grupos"];
-
-            if (oRolesUsuarioActual === undefined){
+            if (oRolesUsuarioActual === undefined) {
                 oRolesUsuarioActual = [];
             }
 
             //Comprobar que no se repita el mismo rol
-
-            let oRolRepetido = oRolesUsuarioActual.find(rol => {
+            let oRolRepetido = oRolesUsuarioActual.find((rol) => {
                 return rol.value === oRolSeleccionado.GroupId;
             });
 
             if (oRolRepetido) {
                 MessageBox.error(that._getI18nText("msgOnDuplicatedRole"));
-            }else{
-                let oUsuarioActual = that.getModel("DetailModel").getData()["UsuarioActual"];
-                let oGroup = that.actionUserToRoleGroup("add", oUsuarioActual);
-                sap.ui.core.BusyIndicator.show();
+                return true;
+            }
 
-                let sFilters;
-                iasService.updateByPatchGroup(deployed, oGroup, oRolSeleccionado.GroupId).then((oResult) => {
-                    MessageToast.show(that._getI18nText("msgOnSuccessAssignedRole"));
-                    //Obtener los roles del nuevo usuario
-                    sFilters = 'emails.value eq "' + oUsuarioActual.Correo + '"';
-                    return iasService.readUsersWithPagination(deployed,sFilters);
-                }).then(oResult =>{
-                    let oEditedUser = that.formatUsersArray(oResult.Resources)[0];
-                    that.getModel("DetailModel").getData()["UsuarioActual"] = oEditedUser;
+            let oUsuarioActual = that.getModel("DetailModel").getData()["UsuarioActual"];
 
-                    let iIndex = that.getModel("DetailModel").getData()["UsuariosSecundarios"].findIndex(x=>{
-                        return x.UserId === oEditedUser.UserId;
-                    });
+            let oGroup = that.actionUserToRoleGroup("add", oUsuarioActual);
 
-                    that.getModel("DetailModel").getData()["UsuariosSecundarios"].splice(iIndex, 1, oEditedUser);                    
-                    
-                    that.getModel("DetailModel").refresh(true);
-                }).finally((oFinal) => {
-                    that.getModel("DetailModel").refresh(true);
-                    sap.ui.core.BusyIndicator.hide();
-                }).catch((oError) => {
-                    console.log(oError);
+            sap.ui.core.BusyIndicator.show();
+
+            oUpdatedGroup = await iasService.updateByPatchGroup(deployed, oGroup, oRolSeleccionado.GroupId);
+
+            //Obtener los roles del nuevo usuario
+            oUser = await iasService.readSingleUser(deployed, oUsuarioActual.UserId);
+
+            if (that.ambiente === "QAS") {
+                oUsuarioActual.Grupos = oUser.groups.filter((x) => {
+                    return x.display.includes("ClientPortal") && x.display.includes("DEV/QAS");
+                });
+            } else if (that.ambiente === "PRD") {
+                oUsuarioActual.Grupos = oUser.groups.filter((x) => {
+                    return x.display.includes("ClientPortal") && x.display.includes("PRD");
                 });
             }
 
+            that.getModel("DetailModel").getData().tempGroups = that.getModel("DetailModel").getData().Groups.filter(x => {return !oUsuarioActual.Grupos.find(y => {return y.value === x.GroupId;});});
 
+            that.getModel("DetailModel").refresh(true);
+            sap.ui.core.BusyIndicator.hide();
+            MessageToast.show(that._getI18nText("msgOnSuccessAssignedRole"));
         },
+
         actionUserToRoleGroup: function(sAction, oUser){
             let oIasGroup = {
                 "schemas": [

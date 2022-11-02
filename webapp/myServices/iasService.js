@@ -27,7 +27,7 @@ sap.ui.define(["sap/ui/model/json/JSONModel"], function (JSONModel) {
         } catch (oError) {
             console.log(oError);
         }
-    },
+    },                                                                          
     auxReadUsers: function (deployed, sFilters="", sPaginationId="") {
         try {
             let sRoute = this.getRoute(deployed);
@@ -157,7 +157,6 @@ sap.ui.define(["sap/ui/model/json/JSONModel"], function (JSONModel) {
             console.log(oError);
         }
     },
-
     updateByPatchUser: function (deployed, oUserObject, sUser=""){
         try {
             let sRoute = this.getRoute(deployed);

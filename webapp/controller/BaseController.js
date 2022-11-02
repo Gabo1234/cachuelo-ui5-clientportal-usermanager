@@ -11,7 +11,7 @@ sap.ui.define([
     function (Controller, UIComponent, MessageBox, MessageToast, Formatter) {
         "use strict";
         let that = this;
-        that.ambiente = "QAS";
+        that.ambiente = "PRD";
         that.appNamespace = "ClientPortal"; 
 
 

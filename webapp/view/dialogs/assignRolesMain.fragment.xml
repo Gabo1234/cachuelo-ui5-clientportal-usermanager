@@ -9,7 +9,7 @@
     
     <VBox >
     <ui:Table
-		rows="{AppModel>/Groups}"
+		rows="{AppModel>/tempGroups}"
 		selectionMode="None"
 		visibleRowCount="10"
 		enableSelectAll="false"
