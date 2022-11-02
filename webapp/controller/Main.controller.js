@@ -1600,7 +1600,7 @@ sap.ui.define(
                                 aUsuariosSecAux = [...aUsuariosSecAux, ...that.getModel("AppModel").getData().aUsersSecundarios.filter(a => {
                                     return a["urn:ietf:params:scim:schemas:extension:enterprise:2.0:User"].costCenter === 
                                     oUser["urn:ietf:params:scim:schemas:extension:enterprise:2.0:User"].costCenter;
-                                })];
+                                })]; 
                             }
                             
                             aFinalUserList = [...aUsuariosAux, ...aUsuariosSecAux];
