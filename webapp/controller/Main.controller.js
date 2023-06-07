@@ -11,6 +11,7 @@ sap.ui.define(
         "../myServices/oDataService",
         "../myServices/iasService",
         "../model/formatter",
+        "../model/models"
     ],
     /**
      * @param {typeof sap.ui.core.mvc.Controller} Controller
@@ -26,7 +27,8 @@ sap.ui.define(
         MessageToast,
         oDataService,
         iasService,
-        formatter
+        formatter,
+        models
     ) {
         "use strict";
         let that;
@@ -40,11 +42,11 @@ sap.ui.define(
                 //Referencias principales
                 that.oAppModel = this.getOwnerComponent().getModel();
                 that.sEmail =
-                    sap.ushell === undefined ? "gabriel.yepes@saasa.com.pe" :   sap.ushell.Container.getService("UserInfo").getUser().getEmail();
+                    sap.ushell === undefined ? "gabriel.yepes@saasa.com.pe" : sap.ushell.Container.getService("UserInfo").getUser().getEmail();
 
-                that.ambiente = "PRD";
+                that.ambiente = "QAS";
 
-                that.appNamespace = that.ambiente === "QAS" ? "CLIENTPORTAL" : "PORTAL";                                                        
+                that.appNamespace = that.ambiente === "QAS" ? "CLIENTPORTAL" : "PORTAL";
 
                 if (that.ambiente === "QAS") {
                     that.rolBaseId = "af492883-9776-4ff4-b1bc-cd8478e5f564";
@@ -61,6 +63,7 @@ sap.ui.define(
                 that.setModel(new JSONModel({}), "AppModel");
                 that.setModel(new JSONModel({}), "NewUserModel");
                 that.setModel(new JSONModel({}), "ConfigModel");
+                that.setModel(new JSONModel({ total: 1, loaded: 0 }), "LoadingModel");
 
                 that.getModel("AppModel").setSizeLimit("2000");
 
@@ -133,10 +136,10 @@ sap.ui.define(
                                 that.sUser["urn:ietf:params:scim:schemas:extension:enterprise:2.0:User"].costCenter +
                                 '"';
                         }
-
-                        return iasService.readUsersWithPagination(deployed, sFilters);
+                        return iasService.readUsersWithPagination(deployed, sFilters, that.getModel("LoadingModel"));
                     })
                     .then((oResult) => {
+
                         //CAMBIO 17-09-2022 -> Obtener los usuarios segun cada perfil
                         that.getModel("AppModel").getData().aAgtAduana = oResult.Resources.filter((x) => {
                             return x["urn:sap:cloud:scim:schemas:extension:custom:2.0:User"];
@@ -241,138 +244,144 @@ sap.ui.define(
                     });
             },
             onGetAppDataAsync: async function () {
-                let oTitle = this.byId("idUserTableTitle");
-                let oIasServiceReading;
-                sap.ui.core.BusyIndicator.show();
-
-                //Lectura de usuario logueado
-                let sFilters = 'emails.value eq "' + that.sEmail + '"';
-                oIasServiceReading = await iasService.readUsers(deployed, sFilters);
-                that.sUser = oIasServiceReading.Resources[0];
-
-                //Leer roles del usuario
-                sFilters = 'urn:sap:cloud:scim:schemas:extension:custom:2.0:Group:name co "' + that.rolAdmin + '"';
-                oIasServiceReading = await iasService.readGroups(deployed, sFilters);
-                let oAdminRol = oIasServiceReading.Resources[0];
-                that.getModel("AppModel").getData()["IsAdmin"] = that.sUser.groups.map((rol) => {return rol.value;}).includes(oAdminRol.id);
-
-                if (that.getModel("AppModel").getData()["IsAdmin"]) {
-                    sFilters = 'urn:ietf:params:scim:schemas:extension:enterprise:2.0:User:division eq "Principal"';
-                } else {
-                    sFilters =
-                        'urn:ietf:params:scim:schemas:extension:enterprise:2.0:User:division eq "Principal" and ' +
-                        'urn:ietf:params:scim:schemas:extension:enterprise:2.0:User:costCenter eq "' +
-                        that.sUser["urn:ietf:params:scim:schemas:extension:enterprise:2.0:User"].costCenter +
-                        '"';
+                try {
+                    let oTitle = this.byId("idUserTableTitle");
+                    let oIasServiceReading;
+                    sap.ui.core.BusyIndicator.show();
+    
+                    //Lectura de usuario logueado
+                    let sFilters = 'emails.value eq "' + that.sEmail + '"';
+                    oIasServiceReading = await iasService.readUsers(deployed, sFilters);
+                    that.sUser = oIasServiceReading.Resources[0];
+                    console.log("USUARIO LOGUEADO: ", that.sUser);
+    
+                    //Leer roles del usuario
+                    sFilters = 'urn:sap:cloud:scim:schemas:extension:custom:2.0:Group:name co "' + that.rolAdmin + '"';
+                    oIasServiceReading = await iasService.readGroups(deployed, sFilters);
+                    let oAdminRol = oIasServiceReading.Resources[0];
+                    that.getModel("AppModel").getData()["IsAdmin"] = that.sUser.groups.map((rol) => { return rol.value; }).includes(oAdminRol.id);
+    
+                    if (that.getModel("AppModel").getData()["IsAdmin"]) {
+                        sFilters = 'urn:ietf:params:scim:schemas:extension:enterprise:2.0:User:division eq "Principal"';
+                    } else {
+                        sFilters =
+                            'urn:ietf:params:scim:schemas:extension:enterprise:2.0:User:division eq "Principal" and ' +
+                            'urn:ietf:params:scim:schemas:extension:enterprise:2.0:User:costCenter eq "' +
+                            that.sUser["urn:ietf:params:scim:schemas:extension:enterprise:2.0:User"].costCenter +
+                            '"';
+                    }
+                    this._openDialogDinamic("busyDialogGeneric");
+                    oIasServiceReading = await iasService.readUsersWithPagination(deployed, sFilters, that.getModel("LoadingModel"));
+    
+                    //Aqui se deben diferenciar entre los ambientes
+                    //Lectura de usuarios con esquema custom
+                    let aUsers = [];
+                    if (oIasServiceReading.Resources !== undefined) {
+                        oIasServiceReading.Resources.filter((user) => {
+                            return user["urn:sap:cloud:scim:schemas:extension:custom:2.0:User"];
+                        }).forEach((UserCustom) => {
+                            if (
+                                UserCustom["urn:sap:cloud:scim:schemas:extension:custom:2.0:User"]["attributes"].find((customAt) => {
+                                    if (customAt.name === "customAttribute2" && customAt.value.includes(that.ambiente)) {
+                                        return customAt;
+                                    }
+                                })
+                            ) {
+                                aUsers.push(UserCustom);
+                            }
+                        });
+                    }
+                    //Fin de lectura
+                    //CAMBIO 17-09-2022 -> Obtener los usuarios segun cada perfil
+                    that.getModel("AppModel").getData().aAgtAduana = aUsers.filter((x) => {
+                        return x["urn:sap:cloud:scim:schemas:extension:custom:2.0:User"];
+                    }).filter((y) => {
+                        return y["urn:sap:cloud:scim:schemas:extension:custom:2.0:User"]["attributes"].find((z) => {
+                            return z.name.includes("customAttribute3");
+                        });
+                    });
+                    that.getModel("AppModel").getData().nAgtAduana = aUsers.filter((x) => {
+                        return x["urn:sap:cloud:scim:schemas:extension:custom:2.0:User"];
+                    }).filter((y) => {
+                        return y["urn:sap:cloud:scim:schemas:extension:custom:2.0:User"]["attributes"].find((z) => {
+                            return z.name.includes("customAttribute3");
+                        });
+                    }).length;
+    
+                    that.getModel("AppModel").getData().aAgtCarga = aUsers.filter((x) => {
+                        return x["urn:sap:cloud:scim:schemas:extension:custom:2.0:User"];
+                    }).filter((y) => {
+                        return y["urn:sap:cloud:scim:schemas:extension:custom:2.0:User"]["attributes"].find((z) => {
+                            return z.name.includes("customAttribute4");
+                        });
+                    });
+                    that.getModel("AppModel").getData().nAgtCarga = aUsers.filter((x) => {
+                        return x["urn:sap:cloud:scim:schemas:extension:custom:2.0:User"];
+                    }).filter((y) => {
+                        return y["urn:sap:cloud:scim:schemas:extension:custom:2.0:User"]["attributes"].find((z) => {
+                            return z.name.includes("customAttribute4");
+                        });
+                    }).length;
+    
+                    that.getModel("AppModel").getData().aClientes = aUsers.filter((x) => {
+                        return x["urn:sap:cloud:scim:schemas:extension:custom:2.0:User"];
+                    }).filter((y) => {
+                        return y["urn:sap:cloud:scim:schemas:extension:custom:2.0:User"]["attributes"].find((z) => {
+                            return z.name.includes("customAttribute5");
+                        });
+                    });
+                    that.getModel("AppModel").getData().nClientes = aUsers.filter((x) => {
+                        return x["urn:sap:cloud:scim:schemas:extension:custom:2.0:User"];
+                    }).filter((y) => {
+                        return y["urn:sap:cloud:scim:schemas:extension:custom:2.0:User"]["attributes"].find((z) => {
+                            return z.name.includes("customAttribute5");
+                        });
+                    }).length;
+    
+                    //END CAMBIO 17-09-2022
+                    if (aUsers.length !== 0) {
+                        that.getModel("AppModel").getData()["UsuariosPrincipales"] = that.formatUsersArray(aUsers);
+                        that.getModel("AppModel").getData()["CantUsuariosPrincipales"] = aUsers.length;
+                    } else {
+                        that.getModel("AppModel").getData()["UsuariosPrincipales"] = [];
+                        that.getModel("AppModel").getData()["CantUsuariosPrincipales"] = 0;
+                    }
+    
+                    //LECTURA DE GRUPOS
+                    sFilters = 'urn:sap:cloud:scim:schemas:extension:custom:2.0:Group:name co "' + that.ambiente + "_" + that.appNamespace + '"'; //Filtro para Names
+                    // sFilters = 'displayName co "' + that.appNamespace + '"'; //Filtro para DisplayNames
+                    oIasServiceReading = await iasService.readGroups(deployed, sFilters);
+                    that.getModel("AppModel").getData()["Groups"] = that.formatGroupsArray(oIasServiceReading.Resources);
+                    that.getModel("AppModel").refresh(true);
+                    that.onAddTableActions();
+                }catch(oError){
+                    MessageBox.error(that._getI18nText("msgServiceError", [oError.status, oError.responseText]));
+                }finally{
+                    this._onCloseDialogDinamic("busyDialogGeneric");
+                    sap.ui.core.BusyIndicator.hide();
                 }
-
-                oIasServiceReading = await iasService.readUsersWithPagination(deployed, sFilters);
-
-                //Aqui se deben diferenciar entre los ambientes
-                //Lectura de usuarios con esquema custom
-                let aUsers = [];
-                if (oIasServiceReading.Resources !== undefined) {
-                    oIasServiceReading.Resources.filter((user) => {
-                        return user["urn:sap:cloud:scim:schemas:extension:custom:2.0:User"];
-                    }).forEach((UserCustom) => {
-                        if (
-                            UserCustom["urn:sap:cloud:scim:schemas:extension:custom:2.0:User"]["attributes"].find((customAt) => {
-                                if (customAt.name === "customAttribute2" && customAt.value.includes(that.ambiente)) {
-                                    return customAt;
-                                }
-                            })
-                        ) {
-                            aUsers.push(UserCustom);
-                        }
-                    });
-                }
-                //Fin de lectura
-                //CAMBIO 17-09-2022 -> Obtener los usuarios segun cada perfil
-                that.getModel("AppModel").getData().aAgtAduana = aUsers.filter((x) => {
-                    return x["urn:sap:cloud:scim:schemas:extension:custom:2.0:User"];
-                }).filter((y) => {
-                    return y["urn:sap:cloud:scim:schemas:extension:custom:2.0:User"]["attributes"].find((z) => {
-                        return z.name.includes("customAttribute3");
-                    });
-                });
-                that.getModel("AppModel").getData().nAgtAduana = aUsers.filter((x) => {
-                    return x["urn:sap:cloud:scim:schemas:extension:custom:2.0:User"];
-                }).filter((y) => {
-                    return y["urn:sap:cloud:scim:schemas:extension:custom:2.0:User"]["attributes"].find((z) => {
-                        return z.name.includes("customAttribute3");
-                    });
-                }).length;
-
-                that.getModel("AppModel").getData().aAgtCarga = aUsers.filter((x) => {
-                    return x["urn:sap:cloud:scim:schemas:extension:custom:2.0:User"];
-                }).filter((y) => {
-                    return y["urn:sap:cloud:scim:schemas:extension:custom:2.0:User"]["attributes"].find((z) => {
-                        return z.name.includes("customAttribute4");
-                    });
-                });
-                that.getModel("AppModel").getData().nAgtCarga = aUsers.filter((x) => {
-                    return x["urn:sap:cloud:scim:schemas:extension:custom:2.0:User"];
-                }).filter((y) => {
-                    return y["urn:sap:cloud:scim:schemas:extension:custom:2.0:User"]["attributes"].find((z) => {
-                        return z.name.includes("customAttribute4");
-                    });
-                }).length;
-
-                that.getModel("AppModel").getData().aClientes = aUsers.filter((x) => {
-                    return x["urn:sap:cloud:scim:schemas:extension:custom:2.0:User"];
-                }).filter((y) => {
-                    return y["urn:sap:cloud:scim:schemas:extension:custom:2.0:User"]["attributes"].find((z) => {
-                        return z.name.includes("customAttribute5");
-                    });
-                });
-                that.getModel("AppModel").getData().nClientes = aUsers.filter((x) => {
-                    return x["urn:sap:cloud:scim:schemas:extension:custom:2.0:User"];
-                }).filter((y) => {
-                    return y["urn:sap:cloud:scim:schemas:extension:custom:2.0:User"]["attributes"].find((z) => {
-                        return z.name.includes("customAttribute5");
-                    });
-                }).length;
-
-                //END CAMBIO 17-09-2022
-                if (aUsers.length !== 0) {
-                    that.getModel("AppModel").getData()["UsuariosPrincipales"] = that.formatUsersArray(aUsers);
-                    that.getModel("AppModel").getData()["CantUsuariosPrincipales"] = aUsers.length;
-                } else {
-                    that.getModel("AppModel").getData()["UsuariosPrincipales"] = [];
-                    that.getModel("AppModel").getData()["CantUsuariosPrincipales"] = 0;
-                }
-
-                //LECTURA DE GRUPOS
-                sFilters = 'urn:sap:cloud:scim:schemas:extension:custom:2.0:Group:name co "' + that.ambiente + "_" + that.appNamespace + '"'; //Filtro para Names
-                // sFilters = 'displayName co "' + that.appNamespace + '"'; //Filtro para DisplayNames
-                oIasServiceReading = await iasService.readGroups(deployed, sFilters);
-                that.getModel("AppModel").getData()["Groups"] = that.formatGroupsArray(oIasServiceReading.Resources);
-
-                
-
-                that.getModel("AppModel").refresh(true);
-                that.onAddTableActions();
-                sap.ui.core.BusyIndicator.hide();
             },
 
-            onGetDataMaestra: async function(){
+            onGetDataMaestra: async function () {
                 let aFilters = [],
                     oParameters = {};
                 let aEstados = [];
                 let oMasterSearch;
                 //Lectura de data maestra
-                oParameters = {$expand: "ToTipoTabla($select=TABLA)"};
+                oParameters = { $expand: "ToTipoTabla($select=TABLA)" };
 
                 //DATOS MAESTROS
                 oMasterSearch = await oDataService.oDataRead(that.oAppModel, "MasterSet", oParameters, aFilters);
-
-                aEstados = oMasterSearch.results.filter((registro) => { return registro.ToTipoTabla.TABLA === "STATUS_USUARIOS";});
-                for (let oEstado of aEstados){
+                aEstados = oMasterSearch.results.filter((registro) => { return registro.ToTipoTabla.TABLA === "STATUS_USUARIOS"; });
+                for (let oEstado of aEstados) {
                     oEstado.CONTENIDO_SECUNDARIO = Boolean(oEstado.CONTENIDO_SECUNDARIO);
                 }
 
-                that.sIasUrl = oMasterSearch.results.find(registro => {return registro.ToTipoTabla.TABLA === "DIRECCION_IAS";}).CONTENIDO;
+                that.sIasUrl = oMasterSearch.results.find(registro => { return registro.ToTipoTabla.TABLA === "DIRECCION_IAS"; }).CONTENIDO;
+
                 that.getModel("AppModel").getData().Estados = aEstados;
+                that.getModel("AppModel").getData().oVigenciaBase = oMasterSearch.results.find(registro => { return registro.ToTipoTabla.TABLA === "CONSTANTES_GESTOR_USUARIOS" && registro.CODIGO === "ANOS_VIGENCIA_BASE"}) 
+                that.getModel("AppModel").refresh();
             },
 
             onAddTableActions: function () {
@@ -458,9 +467,10 @@ sap.ui.define(
                                     }
 
                                     sFilters = 'urn:ietf:params:scim:schemas:extension:enterprise:2.0:User:division eq "Principal"';
-                                    return iasService.readUsersWithPagination(deployed, sFilters);
+                                    return iasService.readUsersWithPagination(deployed, sFilters, that.getModel("LoadingModel"));
                                 })
                                 .then((oResult) => {
+
                                     //Aqui se deben diferenciar entre los ambientes
                                     //Lectura de usuarios con esquema custom
                                     let aUsers = [];
@@ -538,9 +548,10 @@ sap.ui.define(
                     .then((oResult) => {
                         MessageToast.show(sMensaje);
                         sFilters = 'urn:ietf:params:scim:schemas:extension:enterprise:2.0:User:division eq "Principal"';
-                        return iasService.readUsersWithPagination(deployed, sFilters);
+                        return iasService.readUsersWithPagination(deployed, sFilters, that.getModel("LoadingModel"));
                     })
                     .then((oResult) => {
+
                         //Aqui se deben diferenciar entre los ambientes
                         //Lectura de usuarios con esquema custom
                         let aUsers = [];
@@ -641,7 +652,7 @@ sap.ui.define(
                         return x.display.includes("ClientPortal") && x.display.includes("PRD");
                     });
                 }
-                that.getModel("AppModel").getData().tempGroups = that.getModel("AppModel").getData().Groups.filter(x => {return !oUsuario.Grupos.find(y => {return y.value === x.GroupId;});});
+                that.getModel("AppModel").getData().tempGroups = that.getModel("AppModel").getData().Groups.filter(x => { return !oUsuario.Grupos.find(y => { return y.value === x.GroupId; }); });
 
                 that.getModel("AppModel").getData()["UsuarioActual"] = oUsuario;
                 that.getModel("AppModel").refresh(true);
@@ -713,7 +724,7 @@ sap.ui.define(
             onOpenCreateUserDialog: function () {
                 this._openDialogDinamic("newUser");
                 this.getModel("NewUserModel").setData({
-                    ExpiracyDate: new Date(new Date().setFullYear(new Date().getFullYear() + 1)),
+                    ExpiracyDate: new Date(new Date().setFullYear(new Date().getFullYear() + Number(that.getModel("AppModel").getData().oVigenciaBase.CONTENIDO))),
                 });
 
                 this.getModel("ConfigModel").getData()["editableRuc"] = true;
@@ -729,18 +740,18 @@ sap.ui.define(
 
             onValidarUserIas: function (oUsuario) {
                 let aPropiedades = [
-                        "Name",
-                        "LastName1",
-                        "LastName2",
-                        "Email",
-                        "Phone",
-                        "ExpiracyDate",
-                        "RazonSocial",
-                        "Ruc",
-                        "RolAgenteAduana",
-                        "RolAgenteCarga",
-                        "RolCliente",
-                    ],
+                    "Name",
+                    "LastName1",
+                    "LastName2",
+                    "Email",
+                    "Phone",
+                    "ExpiracyDate",
+                    "RazonSocial",
+                    "Ruc",
+                    "RolAgenteAduana",
+                    "RolAgenteCarga",
+                    "RolCliente",
+                ],
                     bNoValidUser = false,
                     iMessage = 0,
                     iContadorRoles = 0;
@@ -924,7 +935,7 @@ sap.ui.define(
                 try {
                     oTablaUsuarios.filter();
                     oTablaUsuarios.refresh(true);
-                } catch (oError) {}
+                } catch (oError) { }
 
                 oEvent.getParameters().selectionSet.forEach((oElementoFiltro) => {
                     if (oElementoFiltro.data().controlType === "CheckBox") {
@@ -1006,17 +1017,20 @@ sap.ui.define(
                         '"' +
                         " and " +
                         'urn:ietf:params:scim:schemas:extension:enterprise:2.0:User:division eq "Principal"';
+
                     iasService
-                        .readUsersWithPagination(deployed, sFilters)
+                        .readUsersWithPagination(deployed, sFilters, that.getModel("LoadingModel"))
                         .then((oResult) => {
+
                             if (oResult.totalResults > 0) {
                                 MessageBox.error("No se puede crear usuarios primarios con el mismo ruc");
                             } else {
                                 sFilters = 'userName co "' + oUserObject.userName + '"'; //Buscar por displayName
-                                return iasService.readUsersWithPagination(deployed, sFilters);
+                                return iasService.readUsersWithPagination(deployed, sFilters, that.getModel("LoadingModel"));
                             }
                         })
                         .then((oResult) => {
+
                             oUserObject.userName += String(oResult.totalResults + 1).padStart(3, 0);
                             oUserObject.displayName += String(oResult.totalResults + 1).padStart(3, 0);
 
@@ -1032,9 +1046,10 @@ sap.ui.define(
                         .then((oResult) => {
                             MessageToast.show(this._getI18nText("msgOnSuccessCreateUser"));
                             sFilters = 'urn:ietf:params:scim:schemas:extension:enterprise:2.0:User:division eq "Principal"';
-                            return iasService.readUsersWithPagination(deployed, sFilters);
+                            return iasService.readUsersWithPagination(deployed, sFilters, that.getModel("LoadingModel"));
                         })
                         .then((oResult) => {
+
                             //Aqui se deben diferenciar entre los ambientes
                             //Lectura de usuarios con esquema custom
                             let aUsers = [];
@@ -1103,10 +1118,15 @@ sap.ui.define(
                     let oUserObject, sFilters;
                     sFilters = 'emails.value eq "' + oUserBefore.Correo + '"';
                     sap.ui.core.BusyIndicator.show();
-                    iasService
-                        .readUsers(deployed, sFilters)
-                        .then((oResult) => {
+                    iasService.readUsers(deployed, sFilters).then((oResult) => {
                             oUserObject = oResult.Resources[0];
+                            oUserObject.name.familyName = `${oUserEdited.LastName1} ${oUserEdited.LastName2}`;
+                            oUserObject.name.givenName = oUserEdited.Name;
+                            oUserObject.phoneNumbers[0].value = oUserEdited.Phone;
+                            oUserObject["urn:ietf:params:scim:schemas:extension:sap:2.0:User"].phoneNumbers[0].value = oUserEdited.Phone;
+                            oUserObject["urn:ietf:params:scim:schemas:extension:sap:2.0:User"].validTo = formatter.dateToZDate(oUserEdited.ExpiracyDate);
+                            oUserObject["active"] = oUserBefore["Status"];
+
                             //Cambio para los perfiles de usuario, 3 para agente aduanas, 4 para agente , 5 para cliente
 
                             if (oUserEdited.hasOwnProperty("RolAgenteAduana")) {
@@ -1130,16 +1150,15 @@ sap.ui.define(
                                     that.editCustomAttribute(oUserObject, 5, "");
                                 }
                             }
-
-                            oUserObject["active"] = oUserBefore["Status"];
                             return iasService.updateByPutUser(deployed, oUserObject, oUserBefore["UserId"]);
                         })
                         .then((oResult) => {
                             MessageToast.show(this._getI18nText("msgOnSuccessEditedUser"));
                             sFilters = 'urn:ietf:params:scim:schemas:extension:enterprise:2.0:User:division eq "Principal"';
-                            return iasService.readUsersWithPagination(deployed, sFilters);
+                            return iasService.readUsersWithPagination(deployed, sFilters, that.getModel("LoadingModel"));
                         })
                         .then((oResult) => {
+
                             //Aqui se deben diferenciar entre los ambientes
                             //Lectura de usuarios con esquema custom
                             let aUsers = [];
@@ -1256,7 +1275,7 @@ sap.ui.define(
                     });
                 }
 
-                that.getModel("AppModel").getData().tempGroups = that.getModel("AppModel").getData().Groups.filter(x => {return !oUsuarioActual.Grupos.find(y => {return y.value === x.GroupId;});});
+                that.getModel("AppModel").getData().tempGroups = that.getModel("AppModel").getData().Groups.filter(x => { return !oUsuarioActual.Grupos.find(y => { return y.value === x.GroupId; }); });
 
                 that.getModel("AppModel").refresh(true);
                 sap.ui.core.BusyIndicator.hide();
@@ -1301,7 +1320,7 @@ sap.ui.define(
                     });
                 }
 
-                that.getModel("AppModel").getData().tempGroups = that.getModel("AppModel").getData().Groups.filter(x => {return !oUsuarioActual.Grupos.find(y => {return y.value === x.GroupId;});});
+                that.getModel("AppModel").getData().tempGroups = that.getModel("AppModel").getData().Groups.filter(x => { return !oUsuarioActual.Grupos.find(y => { return y.value === x.GroupId; }); });
 
                 that.getModel("AppModel").refresh(true);
                 sap.ui.core.BusyIndicator.hide();
@@ -1490,55 +1509,178 @@ sap.ui.define(
                 let sFilters, oIasServiceReading;
                 //LECTURA DE SECUNDARIOS
                 sFilters = 'urn:ietf:params:scim:schemas:extension:enterprise:2.0:User:division eq "Secundario"';
-                sap.ui.core.BusyIndicator.show();
-
-                oIasServiceReading = await iasService.readUsersWithPagination(deployed, sFilters);
+                sap.ui.core.BusyIndicator.show(0, 0);
+                this._openDialogDinamic("busyDialogGeneric");
+                oIasServiceReading = await iasService.readUsersWithPagination(deployed, sFilters, that.getModel("LoadingModel"));
 
                 that.getModel("AppModel").getData().aUsersSecundarios = oIasServiceReading.Resources.filter(x => {
                     return x["urn:sap:cloud:scim:schemas:extension:custom:2.0:User"];
                 }).filter(y => {
-                    return y["urn:sap:cloud:scim:schemas:extension:custom:2.0:User"].attributes.find(z=> {
+                    return y["urn:sap:cloud:scim:schemas:extension:custom:2.0:User"].attributes.find(z => {
                         return z.name.includes("customAttribute2") && z.value.includes(that.ambiente);
                     });
                 });
+                this._onCloseDialogDinamic("busyDialogGeneric");
+
                 sap.ui.core.BusyIndicator.hide();
 
                 this._openDialogDinamic("editProfiles");
 
             },
+            onOpenExtendUserVigency: async function () {
+                let sFilters, oIasServiceReading;
+                //LECTURA DE SECUNDARIOS
+                sFilters = 'urn:ietf:params:scim:schemas:extension:enterprise:2.0:User:division eq "Secundario"';
+                sap.ui.core.BusyIndicator.show(0, 0);
+                this._openDialogDinamic("busyDialogGeneric");
+                oIasServiceReading = await iasService.readUsersWithPagination(deployed, sFilters, that.getModel("LoadingModel"));
+
+                that.getModel("AppModel").getData().aUsersSecundarios = oIasServiceReading.Resources.filter(x => {
+                    return x["urn:sap:cloud:scim:schemas:extension:custom:2.0:User"];
+                }).filter(y => {
+                    return y["urn:sap:cloud:scim:schemas:extension:custom:2.0:User"].attributes.find(z => {
+                        return z.name.includes("customAttribute2") && z.value.includes(that.ambiente);
+                    });
+                });
+                this._onCloseDialogDinamic("busyDialogGeneric");
+
+                sap.ui.core.BusyIndicator.hide();
+
+                that.getModel("AppModel").setProperty("/ExtensionVigencia", {});
+                this._openDialogDinamic("editHours");
+            },
             onConfirmRoleToEdit: function (oEvent) {
                 let sTitle = oEvent.getParameters().listItem.getProperty("title");
                 let sRoleId, sAccion;
-                if (that.getModel("AppModel").getData().TipoOperacion === undefined){
-                    that.getModel("AppModel").getData().TipoOperacion = "Add";
+                if (that.getModel("AppModel").getData().TipoOperacionRoles === undefined) {
+                    that.getModel("AppModel").getData().TipoOperacionRoles = "Add";
                 }
                 that.getModel("AppModel").getData().PerfilAEditar = sTitle;
                 oEvent.getSource().getParent().close();
-                
+
                 this._openDialogDinamic("addDeleteRolesToProfile");
             },
-            onSearchRoles: function(oEvent){
+            onConfirmRoleToExtendVigency: function (oEvent) {
+                let aUsuarios = [], aUsuariosSec = [], aUsuariosAux = [], aPromises = [];
+                let oPatchObject, dFechaAux, iCont = 0;
+                let sTitle = oEvent.getParameters().listItem.getProperty("title");
+                let iAnos = that.getModel("AppModel").getData().ExtensionVigencia.Anos;
+                if (iAnos === undefined){
+                    MessageToast.show(that._getI18nText("msgAlertIngreseNAnos"));
+                    return true;
+                }
+                //Fecha actual
+                dFechaAux = new Date();
+                dFechaAux = dFechaAux.setHours(23, 59, 59);
+                //Tiempo de un ano
+                dFechaAux = dFechaAux + (Number(iAnos) * 365 * 24 * 3600 * 1000);
+                dFechaAux = new Date(dFechaAux);
+
+                switch (sTitle) {
+                    case "Agente de Carga":
+                        aUsuariosAux = that.getModel("AppModel").getData().aAgtCarga;
+                        that.getModel("AppModel").getData().aUsersSecundarios.
+                        break;
+                    case "Agente de Aduana":
+                        aUsuariosAux = that.getModel("AppModel").getData().aAgtAduana;
+                        break;
+                    case "Cliente":
+                        aUsuariosAux = that.getModel("AppModel").getData().aClientes;
+                        break;
+                }
+                //BUSCAR LOS SECUNDARIOS DE LOS USUARIOS SELECCIONADOS POR RUC
+                for (let oUser of aUsuariosAux) {
+                    aUsuariosSec = [...aUsuariosSec, ...that.getModel("AppModel").getData().aUsersSecundarios.filter(a => {
+                        return a["urn:ietf:params:scim:schemas:extension:enterprise:2.0:User"].costCenter ===
+                            oUser["urn:ietf:params:scim:schemas:extension:enterprise:2.0:User"].costCenter;
+                    })];
+                }
+                //JUNTAR LOS USUARIOS
+                aUsuarios = [...aUsuariosSec, ...aUsuariosAux];
+                const localFunc = async function (){
+                    try{
+                        sap.ui.core.BusyIndicator.show();
+                        while(aUsuarios.length > 0){
+                            aPromises = [];
+                            aUsuarios.splice(0,50).forEach((oUsuario) => {                            
+                                //ObjetoPatch
+                                oPatchObject = iasService.getPatchBaseObject();
+                                oPatchObject.Operations.push({
+                                    "op": "replace", 
+                                    "path": "urn:ietf:params:scim:schemas:extension:sap:2.0:User:validTo",
+                                    "value": dFechaAux
+                                });
+                                aPromises.push(iasService.updateByPatchUser(true, oPatchObject, oUsuario.id));
+                            });
+                            await Promise.all(aPromises).then(oResult => {console.log(oResult)});
+                        }
+                        MessageBox.success(that._getI18nText("msgOnSuccessExtendVigency", [iAnos])); 
+                    }catch(oError){
+                        MessageBox.error(oError);
+                    }finally{
+                        sap.ui.core.BusyIndicator.hide();
+                    }
+                }
+
+                MessageBox.alert(that._getI18nText("msgOnAskExtendVigency", [aUsuarios.length]), {
+                    actions: ["Extender fechas", "Cancelar"],
+                    emphasizedAction: "Extender fechas",
+                    onClose: function (sAction) {
+                        if (sAction === "Extender fechas") {
+                            localFunc();
+                        }
+                    }
+                });
+            },
+
+            onOpenSetVigenciaBase: async function(){
+                this._openDialogDinamic("setVigenciaBase");     
+            },
+            onSetVigenciaBase: function(){
+                let oVigencia = that.getModel("AppModel").getData().oVigenciaBase;
+                if (oVigencia.CONTENIDO === "" || oVigencia.CONTENIDO === undefined){
+                    MessageToast.show(that._getI18nText("msgAlertIngreseNAnos"));
+                    return true;
+                }
+
+                let sPath = that.oAppModel.createKey("/MasterSet", {"MASTER_ID": oVigencia.MASTER_ID}),
+                oData = models.getBodyFechaVigencia(oVigencia, that.sUser);
+                sap.ui.core.BusyIndicator.show();
+                oDataService.oDataUpdate(that.oAppModel, sPath, oData).then((oResult) => {
+                    debugger;
+                    that.getModel("AppModel").setProperty("/oVigenciaBase", oResult.data);
+
+                    MessageBox.success(that._getI18nText("msgOnSuccessExtendBaseVigency", [oVigencia.CONTENIDO]));
+                    
+                }).catch(oError => {
+                    MessageBox.error(oError);
+                }).finally(() => {
+                    that._onCloseDialogDinamic("setVigenciaBase");
+                    sap.ui.core.BusyIndicator.hide();
+                });
+            },
+            onSearchRoles: function (oEvent) {
                 var sValue = oEvent.getParameter("value");
                 var oFilter = new Filter("Nombre", FilterOperator.Contains, sValue);
                 var oBinding = oEvent.getParameter("itemsBinding");
                 oBinding.filter([oFilter]);
             },
-            getBodyModificacionPerfil: function(tipoOp, aUsuarios){
+            getBodyModificacionPerfil: function (tipoOp, aUsuarios) {
                 let aUserIds = [], oBase = {
                     schemas: ["urn:ietf:params:scim:api:messages:2.0:PatchOp"],
                     Operations: []
                 };
 
-                aUserIds = aUsuarios.map(x => {return x.id;});
-                
-                for (let sId of aUserIds){
-                    if (tipoOp === "Add"){
+                aUserIds = aUsuarios.map(x => { return x.id; });
+
+                for (let sId of aUserIds) {
+                    if (tipoOp === "Add") {
                         oBase.Operations.push({
                             op: "add",
                             path: "members",
-                            value: [{value: sId}]
+                            value: [{ value: sId }]
                         });
-                    }else if (tipoOp === "Del"){
+                    } else if (tipoOp === "Del") {
                         oBase.Operations.push({
                             op: "remove",
                             path: 'members[value eq "' + sId + '"]'
@@ -1547,16 +1689,16 @@ sap.ui.define(
                 }
 
                 return oBase;
-                
+
             },
-            sliceMyArray: function(aArray){
-                let  iTimes = 0, iLimite = 50,
-                aResults = [];
+            sliceMyArray: function (aArray) {
+                let iTimes = 0, iLimite = 50,
+                    aResults = [];
 
                 iTimes = Math.floor(aArray.length / iLimite);
-                
-                if (iTimes > 0){
-                    for (let i = 0; i <= iTimes; i++){
+
+                if (iTimes > 0) {
+                    for (let i = 0; i <= iTimes; i++) {
                         aResults.push(aArray.slice(i * iLimite, (i + 1) * iLimite));
                     }
                 } else {
@@ -1565,70 +1707,70 @@ sap.ui.define(
 
                 return aResults;
             },
-            onConfirmRolesToAddDelete: function(oEvent){
+            onConfirmRolesToAddDelete: function (oEvent) {
                 let aRoles = [], aFinalUserList = [], aUsuarios = [], aUsuariosAux = [], aUsuariosSecAux = [], aPromises = [], oBodyMod, sFilters;
 
-                for (let oRol of oEvent.getParameters().selectedContexts){
+                for (let oRol of oEvent.getParameters().selectedContexts) {
                     aRoles.push(oRol.getObject());
                 }
 
-                switch(that.getModel("AppModel").getData().PerfilAEditar){
+                switch (that.getModel("AppModel").getData().PerfilAEditar) {
                     case "Agente de Carga":
                         aUsuarios = that.getModel("AppModel").getData().aAgtCarga;
-                    break;
+                        break;
                     case "Agente de Aduana":
                         aUsuarios = that.getModel("AppModel").getData().aAgtAduana;
-                    break;
+                        break;
                     case "Cliente":
                         aUsuarios = that.getModel("AppModel").getData().aClientes;
-                    break;
+                        break;
                 }
 
                 MessageBox.warning(that._getI18nText("msgOnAskAddDeleteRoles"), {
                     actions: ["Modificar perfil", "Cancelar"],
                     emphasizedAction: "Modificar perfil",
                     onClose: function (sAction) {
-                    if (sAction === "Modificar perfil") {
-                        for (let oRol of aRoles){
-                            oBodyMod = "";
-                            if (that.getModel("AppModel").getData().TipoOperacion === "Add"){
-                                aUsuariosAux = aUsuarios.filter(x => {return !x.groups?.find(y => {return y.value === oRol.GroupId;});});
-                            }else if (that.getModel("AppModel").getData().TipoOperacion === "Del"){
-                                aUsuariosAux = aUsuarios.filter(x => {return x.groups?.find(y => {return y.value === oRol.GroupId;});});
-                            }
-                            for (let oUser of aUsuariosAux){
-                                aUsuariosSecAux = [...aUsuariosSecAux, ...that.getModel("AppModel").getData().aUsersSecundarios.filter(a => {
-                                    return a["urn:ietf:params:scim:schemas:extension:enterprise:2.0:User"].costCenter === 
-                                    oUser["urn:ietf:params:scim:schemas:extension:enterprise:2.0:User"].costCenter;
-                                })]; 
-                            }
-                            
-                            aFinalUserList = [...aUsuariosAux, ...aUsuariosSecAux];
-                            if (aFinalUserList.length > 0){
+                        if (sAction === "Modificar perfil") {
+                            for (let oRol of aRoles) {
+                                oBodyMod = "";
+                                if (that.getModel("AppModel").getData().TipoOperacionRoles === "Add") {
+                                    aUsuariosAux = aUsuarios.filter(x => { return !x.groups?.find(y => { return y.value === oRol.GroupId; }); });
+                                } else if (that.getModel("AppModel").getData().TipoOperacionRoles === "Del") {
+                                    aUsuariosAux = aUsuarios.filter(x => { return x.groups?.find(y => { return y.value === oRol.GroupId; }); });
+                                }
+                                for (let oUser of aUsuariosAux) {
+                                    aUsuariosSecAux = [...aUsuariosSecAux, ...that.getModel("AppModel").getData().aUsersSecundarios.filter(a => {
+                                        return a["urn:ietf:params:scim:schemas:extension:enterprise:2.0:User"].costCenter ===
+                                            oUser["urn:ietf:params:scim:schemas:extension:enterprise:2.0:User"].costCenter;
+                                    })];
+                                }
 
-                                aFinalUserList = that.sliceMyArray(aFinalUserList);
+                                aFinalUserList = [...aUsuariosAux, ...aUsuariosSecAux];
+                                if (aFinalUserList.length > 0) {
 
-                                for (let oAux of aFinalUserList){
-                                    oBodyMod = that.getBodyModificacionPerfil(that.getModel("AppModel").getData().TipoOperacion, oAux);
-                                    aPromises.push(iasService.updateByPatchGroup(deployed, oBodyMod, oRol.GroupId));
-                                }  
+                                    aFinalUserList = that.sliceMyArray(aFinalUserList);
+
+                                    for (let oAux of aFinalUserList) {
+                                        oBodyMod = that.getBodyModificacionPerfil(that.getModel("AppModel").getData().TipoOperacionRoles, oAux);
+                                        aPromises.push(iasService.updateByPatchGroup(deployed, oBodyMod, oRol.GroupId));
+                                    }
+                                }
                             }
-                        }
 
-                        sap.ui.core.BusyIndicator.show();
-                        if (aPromises.length > 0){
-                            Promise.all(aPromises).then(oResults => {           
+                            sap.ui.core.BusyIndicator.show();
+                            if (aPromises.length > 0) {
+                                Promise.all(aPromises).then(oResults => {
+                                    MessageBox.success(that._getI18nText("onModProfileSuccess"));
+                                    sap.ui.core.BusyIndicator.hide();
+                                }).catch(oError => {
+                                    console.log("Error");
+                                    sap.ui.core.BusyIndicator.hide();
+                                })
+                            } else {
                                 MessageBox.success(that._getI18nText("onModProfileSuccess"));
                                 sap.ui.core.BusyIndicator.hide();
-                            }).catch(oError => {
-                                console.log("Error");
-                                sap.ui.core.BusyIndicator.hide();
-                            })
-                        }else{
-                            MessageBox.success(that._getI18nText("onModProfileSuccess"));
-                            sap.ui.core.BusyIndicator.hide();
+                            }
                         }
-                    }
                     }
                 });
             }

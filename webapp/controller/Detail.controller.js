@@ -293,7 +293,7 @@ sap.ui.define(
         onCreateSecondaryUser: function(){
             this._openDialogDinamic("newUser");
             this.getModel("NewUserModel").setData({
-                "ExpiracyDate": new Date(new Date().setFullYear(new Date().getFullYear() + 1))
+                "ExpiracyDate": new Date(new Date().setFullYear(new Date().getFullYear() + Number(that.getModel("AppModel").getData().oVigenciaBase.CONTENIDO)))
             });
 
             //Setear campos heredados

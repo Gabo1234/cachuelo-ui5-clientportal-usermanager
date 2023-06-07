@@ -131,6 +131,9 @@ sap.ui.define([
                   }
                   this[sDialogName].open();
                 },
+                _onCloseDialogDinamic: function(sDialog) {
+                    this["o" + sDialog].close();
+                },
                 _validateEmail: function(sEmail){
                     return String(sEmail)
                     .toLowerCase()
@@ -199,6 +202,7 @@ sap.ui.define([
 
                 editCustomAttribute: function(oUser, idStat, sContent){
                     let bCustomSchema = (oUser["urn:sap:cloud:scim:schemas:extension:custom:2.0:User"] === undefined) ? false : true;
+                    let auxIndex = 0;
                     let oAtt = {
                         "name" : "customAttribute" + idStat,
                         "value": sContent
@@ -207,7 +211,10 @@ sap.ui.define([
                     if (bCustomSchema){
                         let aAttributes = oUser["urn:sap:cloud:scim:schemas:extension:custom:2.0:User"].attributes;
                         if (sContent === ""){
-                            aAttributes.splice(aAttributes.indexOf(aAttributes.filter((x) =>{return x.name === "customAttribute" + idStat; })),1);
+                            auxIndex = aAttributes.indexOf(aAttributes.filter((x) =>{return x.name === "customAttribute" + idStat; }));
+                            if (auxIndex > -1){
+                                aAttributes.splice(auxIndex,1);
+                            }
                         }else{
                             let oAttToEdit = aAttributes.find(x =>{return x.name === "customAttribute" + idStat; });
                             if (oAttToEdit !== undefined){

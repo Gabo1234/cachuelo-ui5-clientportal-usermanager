@@ -18,6 +18,15 @@ sap.ui.define([
                 var oModel = new JSONModel(Device);
                 oModel.setDefaultBindingMode("OneWay");
                 return oModel;
-        }
-    };
+            },
+            getBodyFechaVigencia: function(oFechaVigencia, oUsuario){
+                let oBody = {};
+                oBody.fechaActualiza = new Date();
+                oBody.usuarioActualiza = oUsuario.userName;
+                oBody.CONTENIDO = oFechaVigencia.CONTENIDO;
+                return oBody;
+            }
+            
+
+        };
 });

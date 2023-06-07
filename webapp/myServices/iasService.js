@@ -48,28 +48,32 @@ sap.ui.define(["sap/ui/model/json/JSONModel"], function (JSONModel) {
             console.log(oError);
         }
     },
-    readUsersWithPagination: async function (deployed, sFilters="") {
+    readUsersWithPagination: async function (deployed, sFilters="", oModelLoad = "") {
         try {
             let bEnd = false;
-            let oBatch, aUsuarios = [], nextId = "initial"; 
+            let oBatch, aUsuarios = [], nextId = "initial", accum = 0; 
             while (!bEnd){
                 oBatch = await this.auxReadUsers(deployed,sFilters, nextId);
+                if (oModelLoad !== ""){
+                    //ACUMULAR EL TOTAL
+                    accum += oBatch.Resources?.length ?? 0; 
+
+                    //POBLAR EL MODELO CON DATOS
+                    oModelLoad.setProperty("/loaded", accum);
+                    oModelLoad.setProperty("/total", oBatch.totalResults);
+                    oModelLoad.refresh();
+                }   
+
                 if (oBatch.nextId !== "end"){
                     nextId = oBatch.nextId;
                 }else {
                     bEnd = true;
                 }
-                aUsuarios.push(oBatch);
+                aUsuarios = [...aUsuarios, ...oBatch.Resources ?? []];
             }
             let aAux = [], oAux = {};
-            aUsuarios.forEach(x => {
-                if (aAux.length !== 0) {
-                    aAux = aAux.concat(x.Resources);
-                }else{
-                    aAux = x.Resources;
-                }
-            });
-            oAux = {Resources: (aAux === undefined) ? [] : aAux, totalResults: (aAux === undefined) ? 0 : aAux.length};
+            oAux = {Resources: (aAux === undefined) ? [] : aUsuarios, totalResults: (aAux === undefined) ? 0 : aUsuarios.length};
+            console.log(oAux);
             return oAux;
         } catch (oError) {
             console.log(oError);
@@ -222,6 +226,18 @@ sap.ui.define(["sap/ui/model/json/JSONModel"], function (JSONModel) {
         } catch (oError) {
             console.log(oError);
         }
+    },
+    getPatchBaseObject: function (){
+        let oObject = {
+            "schemas": ["urn:ietf:params:scim:api:messages:2.0:PatchOp"],
+            "Operations": []
+        }
+        /* {
+            "op": "replace",
+            "path": "urn:ietf:params:scim:schemas:extension:sap:2.0:User:validTo",
+            "value": "2030-05-31T00:00:00Z"
+          } */
+        return oObject;
     }
   };
 });

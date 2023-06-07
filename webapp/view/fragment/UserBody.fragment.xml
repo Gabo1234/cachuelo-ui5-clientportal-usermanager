@@ -32,6 +32,22 @@
 					press="onOpenEditUserProfile"
                     visible="{AppModel>/IsAdmin}" 
 				/>
+				<Button
+					icon="sap-icon://create-entry-time"
+					tooltip="{i18n>btnExtenderFechas}"
+					type="Emphasized"
+					text="{i18n>btnExtenderFechas}"
+					press="onOpenExtendUserVigency"
+                    visible="{AppModel>/IsAdmin}" 
+				/>
+				<Button
+					icon="sap-icon://create-entry-time"
+					tooltip="{i18n>btnSetVigenciaBase}"
+					type="Emphasized"
+					text="{i18n>btnSetVigenciaBase}"
+					press="onOpenSetVigenciaBase"
+                    visible="{AppModel>/IsAdmin}" 
+				/>
 			</OverflowToolbar>
 		</ui:extension>
 		<ui:columns>	

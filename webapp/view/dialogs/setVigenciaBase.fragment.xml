@@ -1,0 +1,17 @@
+<core:FragmentDefinition xmlns="sap.m"
+    xmlns:core="sap.ui.core">
+    <Dialog title="{i18n>setVigencyTitle}">    
+        <VBox alignItems="Center" class="sapUiResponsiveMargin">
+            <Label text="{i18n>lblVigenciaBase}" />
+            <MaskInput value="{AppModel>/oVigenciaBase/CONTENIDO}" mask="I" placeholderSymbol="_" placeholder="{i18n>inpPhAnos}" >
+                <rules>
+                    <MaskInputRule maskFormatSymbol="I" regex="[1-9]"/>
+                </rules>
+            </MaskInput>
+        </VBox>    
+        <buttons>
+            <Button type="Emphasized" text="{i18n>btnFijarVigenciaBase}" press="onSetVigenciaBase" />
+            <Button type="Reject" text="{i18n>btnCerrar}" press="onCloseDialog" />
+        </buttons>
+    </Dialog>
+</core:FragmentDefinition>
