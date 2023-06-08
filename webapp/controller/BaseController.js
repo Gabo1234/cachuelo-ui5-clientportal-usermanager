@@ -229,6 +229,15 @@ sap.ui.define([
                     }
                     
                     
+                },
+                controlXHRErrors: function(oError){
+                    if (oError.status === 502){
+                        MessageBox.error(that._getI18nText("msg502Error"));
+                    } else if (oError.status === 429){
+                        MessageBox.error(that._getI18nText("msg429Error"));
+                    }else{
+                        MessageBox.error(that._getI18nText("msgGenericError"));
+                    }
                 }
 
         });

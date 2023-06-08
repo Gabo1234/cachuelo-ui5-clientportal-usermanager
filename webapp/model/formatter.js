@@ -757,8 +757,7 @@ sap.ui.define(
       },
       formatZDateToDate: function (zDate) {
           if(zDate){
-            
-            return new Date(zDate.split("T")[0]);
+            return new Date(zDate);
           }
       },
       normalizeString: function(sString){
@@ -780,9 +779,9 @@ sap.ui.define(
         let sDay = String(oDate.getUTCDate()),
             sMonth = ("00" + String(oDate.getUTCMonth() + 1)).slice(-2),
             sYear = String(oDate.getUTCFullYear()),
-            sHour = "00",
-            sMinute = "00",
-            sSecond = "00";
+            sHour = "23",
+            sMinute = "59",
+            sSecond = "59";
 
             sDay = sDay.padStart(2,0);
 

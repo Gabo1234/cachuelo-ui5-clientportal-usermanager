@@ -44,7 +44,7 @@ sap.ui.define(
                 that.sEmail =
                     sap.ushell === undefined ? "gabriel.yepes@saasa.com.pe" : sap.ushell.Container.getService("UserInfo").getUser().getEmail();
 
-                that.ambiente = "QAS";
+                that.ambiente = "PRD";
 
                 that.appNamespace = that.ambiente === "QAS" ? "CLIENTPORTAL" : "PORTAL";
 
@@ -75,7 +75,7 @@ sap.ui.define(
                 //Metodos para los estilos iniciales y vista
                 this.onAddStyles();
             },
-            onGetAppData: function () {
+            /* onGetAppData: function () {
                 let oTitle = this.byId("idUserTableTitle");
                 let aFilters = [],
                     oParameters = {};
@@ -242,7 +242,7 @@ sap.ui.define(
                     .catch((oError) => {
                         console.log(oError);
                     });
-            },
+            }, */
             onGetAppDataAsync: async function () {
                 try {
                     let oTitle = this.byId("idUserTableTitle");
@@ -355,7 +355,7 @@ sap.ui.define(
                     that.getModel("AppModel").refresh(true);
                     that.onAddTableActions();
                 }catch(oError){
-                    MessageBox.error(that._getI18nText("msgServiceError", [oError.status, oError.responseText]));
+                    that.controlXHRErrors(oError);
                 }finally{
                     this._onCloseDialogDinamic("busyDialogGeneric");
                     sap.ui.core.BusyIndicator.hide();
@@ -1190,7 +1190,7 @@ sap.ui.define(
                             that.getModel("AppModel").refresh(true);
                         })
                         .catch((oError) => {
-                            MessageBox.error(oError);
+                            that.controlXHRErrors(oError);
                         })
                         .finally((oFinal) => {
                             sap.ui.core.BusyIndicator.hide();
@@ -1561,11 +1561,11 @@ sap.ui.define(
                 this._openDialogDinamic("addDeleteRolesToProfile");
             },
             onConfirmRoleToExtendVigency: function (oEvent) {
-                let aUsuarios = [], aUsuariosSec = [], aUsuariosAux = [], aPromises = [];
+                let aUsuarios = [], aUsuariosSec = [], aUsuariosAux = [], aUsuariosMain = [], aPromises = [];
                 let oPatchObject, dFechaAux, iCont = 0;
                 let sTitle = oEvent.getParameters().listItem.getProperty("title");
                 let iAnos = that.getModel("AppModel").getData().ExtensionVigencia.Anos;
-                if (iAnos === undefined){
+                if (iAnos === "" || iAnos === undefined){
                     MessageToast.show(that._getI18nText("msgAlertIngreseNAnos"));
                     return true;
                 }
@@ -1578,25 +1578,25 @@ sap.ui.define(
 
                 switch (sTitle) {
                     case "Agente de Carga":
-                        aUsuariosAux = that.getModel("AppModel").getData().aAgtCarga;
-                        that.getModel("AppModel").getData().aUsersSecundarios.
+                        aUsuariosMain = that.getModel("AppModel").getData().aAgtCarga;
                         break;
                     case "Agente de Aduana":
-                        aUsuariosAux = that.getModel("AppModel").getData().aAgtAduana;
+                        aUsuariosMain = that.getModel("AppModel").getData().aAgtAduana;
                         break;
                     case "Cliente":
-                        aUsuariosAux = that.getModel("AppModel").getData().aClientes;
+                        aUsuariosMain = that.getModel("AppModel").getData().aClientes;
                         break;
                 }
                 //BUSCAR LOS SECUNDARIOS DE LOS USUARIOS SELECCIONADOS POR RUC
-                for (let oUser of aUsuariosAux) {
-                    aUsuariosSec = [...aUsuariosSec, ...that.getModel("AppModel").getData().aUsersSecundarios.filter(a => {
+                for (let oUser of aUsuariosMain) {
+                    aUsuariosAux = that.getModel("AppModel").getData().aUsersSecundarios.filter(a => {
                         return a["urn:ietf:params:scim:schemas:extension:enterprise:2.0:User"].costCenter ===
                             oUser["urn:ietf:params:scim:schemas:extension:enterprise:2.0:User"].costCenter;
-                    })];
+                    })
+                    aUsuariosSec = [...aUsuariosSec, ...aUsuariosAux];
                 }
                 //JUNTAR LOS USUARIOS
-                aUsuarios = [...aUsuariosSec, ...aUsuariosAux];
+                aUsuarios = [...aUsuariosSec, ...aUsuariosMain];
                 const localFunc = async function (){
                     try{
                         sap.ui.core.BusyIndicator.show();
@@ -1616,7 +1616,7 @@ sap.ui.define(
                         }
                         MessageBox.success(that._getI18nText("msgOnSuccessExtendVigency", [iAnos])); 
                     }catch(oError){
-                        MessageBox.error(oError);
+                        that.controlXHRErrors(oError);   
                     }finally{
                         sap.ui.core.BusyIndicator.hide();
                     }
@@ -1653,7 +1653,8 @@ sap.ui.define(
                     MessageBox.success(that._getI18nText("msgOnSuccessExtendBaseVigency", [oVigencia.CONTENIDO]));
                     
                 }).catch(oError => {
-                    MessageBox.error(oError);
+                    that.controlXHRErrors(oError);
+                    return;
                 }).finally(() => {
                     that._onCloseDialogDinamic("setVigenciaBase");
                     sap.ui.core.BusyIndicator.hide();
@@ -1763,7 +1764,7 @@ sap.ui.define(
                                     MessageBox.success(that._getI18nText("onModProfileSuccess"));
                                     sap.ui.core.BusyIndicator.hide();
                                 }).catch(oError => {
-                                    console.log("Error");
+                                    that.controlXHRErrors(oError);
                                     sap.ui.core.BusyIndicator.hide();
                                 })
                             } else {
